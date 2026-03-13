@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seven OS — Strategic Command Centre</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,'Helvetica Neue',sans-serif;background:#f8f7f4;color:#1a1a1a;min-height:100vh}
+:root{
+  --ink:#0f0e0d;--ink-2:#4a4845;--ink-3:#8a8784;
+  --paper:#f8f7f4;--white:#ffffff;
+  --border:#e2e0db;--border-dark:#c8c5bf;
+  --green:#1a6b3c;--green-bg:#eaf4ee;
+  --amber:#b45309;--amber-bg:#fef3c7;
+  --red:#b91c1c;--red-bg:#fee2e2;
+  --blue:#1d4ed8;--blue-bg:#eff6ff;
+  --purple:#5b21b6;--purple-bg:#ede9fe;
+  --teal:#0f6b56;--teal-bg:#e0f4ee;
+  --accent:#0f0e0d;
+}
+
+/* Layout */
+.app{display:flex;min-height:100vh}
+.sidebar{width:220px;background:var(--ink);flex-shrink:0;display:flex;flex-direction:column;padding:0}
+.main{flex:1;overflow-y:auto;padding:2rem 2.5rem}
+
+/* Sidebar */
+.sidebar-top{padding:1.5rem 1.25rem 1rem}
+.sidebar-logo{font-size:18px;font-weight:700;color:#ffffff;letter-spacing:-0.02em;margin-bottom:2px}
+.sidebar-logo span{display:block;font-size:11px;font-weight:400;color:#9ca3af;letter-spacing:0.02em;margin-top:2px}
+.sidebar-nav{flex:1;padding:0.5rem 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 1.25rem;cursor:pointer;font-size:13px;color:#9ca3af;transition:all 0.12s;border-left:2px solid transparent;letter-spacing:0.01em}
+.nav-item:hover{color:#e5e7eb;background:rgba(255,255,255,0.04)}
+.nav-item.active{color:#ffffff;border-left-color:#ffffff;background:rgba(255,255,255,0.07);font-weight:500}
+.nav-icon{width:16px;height:16px;flex-shrink:0;opacity:0.7}
+.nav-item.active .nav-icon{opacity:1}
+.sidebar-footer{padding:1rem 1.25rem;border-top:1px solid rgba(255,255,255,0.08)}
+.sidebar-meta{font-size:11px;color:#6b7280}
+
+/* Sections */
+.section{display:none}.section.active{display:block}
+
+/* Page header */
+.page-header{margin-bottom:1.75rem}
+.page-title{font-size:24px;font-weight:600;color:var(--ink);letter-spacing:-0.02em;margin-bottom:4px}
+.page-sub{font-size:14px;color:var(--ink-3)}
+
+/* Cards */
+.card{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:1.25rem;margin-bottom:1rem}
+.card-label{font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--ink-3);margin-bottom:0.75rem}
+.card-title{font-size:15px;font-weight:600;color:var(--ink);margin-bottom:0.5rem}
+
+/* Metrics */
+.metric-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem}
+.metric{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:1rem 1.25rem}
+.metric-n{font-size:28px;font-weight:600;color:var(--ink);line-height:1;letter-spacing:-0.03em}
+.metric-l{font-size:12px;color:var(--ink-3);margin-top:5px}
+.metric-n.warn{color:var(--red)}
+
+/* Workstream cards */
+.ws-card{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:1.25rem;margin-bottom:0.75rem;transition:border-color 0.12s}
+.ws-card:hover{border-color:var(--border-dark)}
+.ws-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px}
+.ws-name{font-size:15px;font-weight:600;color:var(--ink);line-height:1.3}
+.ws-desc{font-size:13px;color:var(--ink-2);line-height:1.6;margin-bottom:10px}
+.ws-meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ws-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+
+/* Tags */
+.tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500;white-space:nowrap}
+.tag-green{background:var(--green-bg);color:var(--green)}
+.tag-amber{background:var(--amber-bg);color:var(--amber)}
+.tag-red{background:var(--red-bg);color:var(--red)}
+.tag-blue{background:var(--blue-bg);color:var(--blue)}
+.tag-purple{background:var(--purple-bg);color:var(--purple)}
+.tag-teal{background:var(--teal-bg);color:var(--teal)}
+.tag-grey{background:#f3f4f6;color:#374151}
+
+/* Status dot */
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dot-green{background:#10b981}.dot-amber{background:#f59e0b}.dot-red{background:#ef4444}
+
+/* Tasks */
+.task-row{display:flex;align-items:flex-start;gap:10px;padding:0.6rem 0;border-bottom:1px solid var(--border)}
+.task-row:last-child{border-bottom:none}
+.chk{width:17px;height:17px;border:1.5px solid var(--border-dark);border-radius:4px;cursor:pointer;flex-shrink:0;margin-top:1px;transition:all 0.1s;display:flex;align-items:center;justify-content:center}
+.chk:hover{border-color:var(--ink)}
+.chk.done{background:var(--ink);border-color:var(--ink)}
+.chk.done::after{content:'';width:8px;height:5px;border-left:1.5px solid white;border-bottom:1.5px solid white;transform:rotate(-45deg) translate(1px,-1px);display:block}
+.task-body{flex:1}
+.task-name{font-size:14px;color:var(--ink);line-height:1.5}
+.task-name.done{text-decoration:line-through;color:var(--ink-3)}
+.task-sub{display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;align-items:center}
+.overdue-flag{font-size:11px;font-weight:500;color:var(--red)}
+
+/* Notes */
+.note-item{background:#fafaf9;border:1px solid var(--border);border-radius:8px;padding:0.875rem;margin-bottom:0.5rem}
+.note-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px}
+.note-body{font-size:13px;color:var(--ink-2);line-height:1.6}
+.note-time{font-size:11px;color:var(--ink-3)}
+
+/* Forms */
+input[type=text],input[type=date],textarea,select{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;background:var(--white);color:var(--ink);font-size:13px;font-family:inherit;transition:border-color 0.1s}
+input[type=text]:focus,textarea:focus,select:focus{outline:none;border-color:var(--ink)}
+textarea{resize:vertical;min-height:80px;line-height:1.6}
+.frow{display:flex;gap:8px;margin-bottom:0.75rem}
+.frow>*{flex:1}
+
+/* Buttons */
+.btn{padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:var(--white);cursor:pointer;font-size:13px;font-family:inherit;color:var(--ink);transition:all 0.1s;font-weight:500}
+.btn:hover{background:#f9f8f6;border-color:var(--border-dark)}
+.btn-dark{background:var(--ink);color:white;border-color:transparent}
+.btn-dark:hover{background:#2a2925;opacity:1}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-ghost{border-color:transparent;color:var(--ink-2)}
+.btn-ghost:hover{background:#f3f2ef;color:var(--ink)}
+.brow{display:flex;gap:8px;flex-wrap:wrap;margin-top:0.875rem}
+
+/* AI output box */
+.ai-out{background:#fafaf9;border:1px solid var(--border);border-left:3px solid var(--ink);border-radius:0 8px 8px 0;padding:1rem 1.125rem;font-size:14px;line-height:1.75;color:var(--ink-2);white-space:pre-wrap;margin-top:0.75rem}
+
+/* Intel buttons */
+.intel-row{display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;border:1px solid var(--border);border-radius:8px;background:var(--white);cursor:pointer;margin-bottom:8px;transition:all 0.12s;font-family:inherit}
+.intel-row:hover{border-color:var(--ink);background:#fafaf9}
+.intel-title{font-size:14px;font-weight:500;color:var(--ink)}
+.intel-sub{font-size:12px;color:var(--ink-3);margin-top:2px}
+.intel-arrow{font-size:12px;color:var(--ink-3)}
+
+/* Day question */
+.day-q{font-size:16px;line-height:1.6;color:var(--ink);font-style:italic;padding:1rem 1.25rem;background:#fafaf9;border-radius:8px;border-left:3px solid var(--ink);margin-bottom:0.75rem}
+
+/* Progress */
+.prog{height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:6px}
+.prog-fill{height:100%;background:var(--green);border-radius:2px}
+
+/* Separator */
+hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
+
+/* Empty */
+.empty{font-size:13px;color:var(--ink-3);padding:1.25rem 0;text-align:center}
+
+/* Section group label */
+.group-label{font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--ink-3);margin:1.5rem 0 0.75rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border)}
+
+/* Priority dot */
+.pri{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.pri-high{background:#ef4444}.pri-med{background:#f59e0b}.pri-low{background:#6b7280}
+
+/* Comms preview */
+.comms-preview{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:1rem;font-size:13px;line-height:1.7;color:#14532d;white-space:pre-wrap;margin-top:0.75rem;font-family:monospace}
+
+/* Toggle form */
+.form-panel{background:#fafaf9;border:1px solid var(--border);border-radius:10px;padding:1.25rem;margin-bottom:1rem;display:none}
+.form-panel.open{display:block}
+
+/* Responsive */
+@media(max-width:700px){
+  .sidebar{width:60px}.sidebar-logo span,.nav-item span,.sidebar-footer{display:none}
+  .main{padding:1.25rem}.metric-row{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-top">
+    <div class="sidebar-logo">Seven OS<span>Strategy Command Centre</span></div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-item active" onclick="tab('daily',this)">
+      <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span>Daily briefing</span>
+    </div>
+    <div class="nav-item" onclick="tab('workstreams',this)">
+      <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M3 3h7v7H3zm11 0h7v7h-7zM3 14h7v7H3zm11 0h7v7h-7z"/></svg>
+      <span>Workstreams</span>
+    </div>
+    <div class="nav-item" onclick="tab('tasks',this)">
+      <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      <span>Tasks</span>
+    </div>
+    <div class="nav-item" onclick="tab('notes',this)">
+      <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <span>Notes & log</span>
+    </div>
+    <div class="nav-item" onclick="tab('coach',this)">
+      <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span>Strategic coach</span>
+    </div>
+    <div class="nav-item" onclick="tab('comms',this)">
+      <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      <span>Comms hub</span>
+    </div>
+    <div class="nav-item" onclick="tab('intel',this)">
+      <svg class="nav-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <span>Industry intel</span>
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-meta">Ethan Rand · Angstrom Sports</div>
+    <div class="sidebar-meta" style="margin-top:2px" id="sb-date"></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- ══ DAILY BRIEFING ══ -->
+  <div id="sec-daily" class="section active">
+    <div class="page-header">
+      <div class="page-title" id="greeting">Good morning, Ethan</div>
+      <div class="page-sub" id="full-date"></div>
+    </div>
+
+    <div class="metric-row">
+      <div class="metric"><div class="metric-n" id="m-ws">0</div><div class="metric-l">Active workstreams</div></div>
+      <div class="metric"><div class="metric-n" id="m-today">0</div><div class="metric-l">Tasks due today</div></div>
+      <div class="metric"><div class="metric-n warn" id="m-over">0</div><div class="metric-l">Overdue</div></div>
+      <div class="metric"><div class="metric-n" id="m-notes">0</div><div class="metric-l">Notes this week</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Director question of the day</div>
+      <div class="day-q" id="day-q"></div>
+      <p style="font-size:13px;color:var(--ink-3)">Sit with this before you start. The best strategists ask better questions than everyone else.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Today's priorities</div>
+      <div id="daily-tasks"><p class="empty">No tasks due today. Add tasks in the Tasks tab.</p></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+      <div class="card">
+        <div class="card-label">Morning briefing email</div>
+        <p style="font-size:13px;color:var(--ink-2);margin-bottom:0.875rem;line-height:1.6">Generates your personalised briefing — priorities, strategic framing, one proactive idea — then opens it in Outlook ready to send to yourself.</p>
+        <button class="btn btn-dark" id="briefing-btn" onclick="generateMorningBriefing()">Generate & open in Outlook →</button>
+        <div id="briefing-loading" style="display:none;font-size:13px;color:var(--ink-3);margin-top:0.5rem">Generating your briefing...</div>
+        <div id="briefing-preview-wrap" style="display:none;margin-top:0.875rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
+            <span style="font-size:12px;font-weight:600;color:var(--ink-3);letter-spacing:0.05em;text-transform:uppercase">Preview</span>
+            <div style="display:flex;gap:6px">
+              <button class="btn btn-sm btn-dark" onclick="openBriefingInOutlook()">Open in Outlook →</button>
+              <button class="btn btn-sm" onclick="copyBriefing()">Copy</button>
+            </div>
+          </div>
+          <div id="briefing-preview" style="background:#fafaf9;border:1px solid var(--border);border-radius:8px;padding:1rem;font-size:13px;line-height:1.8;color:var(--ink-2);white-space:pre-wrap;max-height:300px;overflow-y:auto"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-label">Proactive idea generator</div>
+        <p style="font-size:13px;color:var(--ink-2);margin-bottom:0.875rem;line-height:1.6">Self-generated work that goes beyond your assigned tasks. The habit that gets you to Director.</p>
+        <button class="btn btn-dark" onclick="runProactiveIdeas()">Generate ideas →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ WORKSTREAMS ══ -->
+  <div id="sec-workstreams" class="section">
+    <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between">
+      <div>
+        <div class="page-title">Workstreams</div>
+        <div class="page-sub">Every thread you're pulling on. Keep this honest.</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" onclick="toggleForm('ws-parse-form')">Paste a message →</button>
+        <button class="btn btn-dark" onclick="toggleForm('ws-form')">+ Manual add</button>
+      </div>
+    </div>
+
+    <!-- PARSE MESSAGE INTO WORKSTREAM -->
+    <div id="ws-parse-form" class="form-panel">
+      <div class="card-title" style="margin-bottom:4px">Turn a message into a workstream</div>
+      <p style="font-size:13px;color:var(--ink-2);margin-bottom:0.875rem;line-height:1.6">Paste anything — a Teams message from Ross or Ben, a Slack thread, an email brief. The AI will extract the workstream, task, context, and who's involved.</p>
+      <select id="parse-source" style="margin-bottom:0.75rem">
+        <option>Ross — Teams</option><option>Ben — Teams</option><option>Ross — Email</option>
+        <option>Ben — Email</option><option>Slack</option><option>Meeting notes</option><option>Other</option>
+      </select>
+      <textarea id="ws-parse-input" placeholder="Paste the message here exactly as you received it..." style="min-height:120px;margin-bottom:0.75rem"></textarea>
+      <div id="ws-parse-preview" style="display:none">
+        <div class="card-label" style="margin-bottom:0.5rem">Extracted workstream — review before saving</div>
+        <div class="frow"><input type="text" id="wsp-name" placeholder="Workstream name"></div>
+        <div class="frow">
+          <select id="wsp-area">
+            <option value="">Area...</option>
+            <option>Product strategy</option><option>Commercial</option><option>Growth & acquisition</option>
+            <option>Data & analytics</option><option>Partnerships</option><option>Roadmap planning</option>
+            <option>Comms & reporting</option><option>Operations</option><option>Self-initiated</option>
+          </select>
+          <select id="wsp-status"><option>In progress</option><option>Blocked</option><option>On hold</option></select>
+        </div>
+        <div class="frow"><textarea id="wsp-desc" style="min-height:70px"></textarea></div>
+        <div class="frow">
+          <input type="text" id="wsp-owner" placeholder="Stakeholders involved">
+          <input type="text" id="wsp-tasks" placeholder="Immediate tasks extracted">
+        </div>
+        <div class="brow">
+          <button class="btn btn-dark" onclick="saveParseWs()">Save as workstream</button>
+          <button class="btn" onclick="document.getElementById('ws-parse-preview').style.display='none'">Re-parse</button>
+          <button class="btn btn-ghost" onclick="toggleForm('ws-parse-form')">Cancel</button>
+        </div>
+      </div>
+      <div id="ws-parse-loading" style="display:none;font-size:13px;color:var(--ink-3);padding:0.5rem 0">Parsing message...</div>
+      <div style="display:flex;gap:8px" id="ws-parse-btn-row">
+        <button class="btn btn-dark" onclick="parseMessage()">Extract workstream →</button>
+        <button class="btn btn-ghost" onclick="toggleForm('ws-parse-form')">Cancel</button>
+      </div>
+    </div>
+
+    <div id="ws-form" class="form-panel">
+      <div class="card-title">Add workstream</div>
+      <div class="frow"><input type="text" id="ws-name" placeholder="Workstream name"></div>
+      <div class="frow">
+        <select id="ws-area">
+          <option value="">Area...</option>
+          <option>Product strategy</option><option>Commercial</option><option>Growth & acquisition</option>
+          <option>Data & analytics</option><option>Partnerships</option><option>Roadmap planning</option>
+          <option>Comms & reporting</option><option>Operations</option><option>Self-initiated</option>
+        </select>
+        <select id="ws-status">
+          <option>In progress</option><option>Blocked</option><option>On hold</option><option>Complete</option>
+        </select>
+      </div>
+      <div class="frow"><textarea id="ws-desc" placeholder="What is this workstream? What's the goal? What stage is it at? The more detail here, the smarter everything else gets."></textarea></div>
+      <div class="frow">
+        <input type="text" id="ws-owner" placeholder="Who else is involved? (e.g. Ross, Ben, Engineering)">
+        <input type="date" id="ws-due" title="Target completion">
+      </div>
+      <div class="brow">
+        <button class="btn btn-dark" onclick="addWorkstream()">Save workstream</button>
+        <button class="btn" onclick="toggleForm('ws-form')">Cancel</button>
+      </div>
+    </div>
+
+    <div id="ws-list"><p class="empty">No workstreams yet. Add your first one above.</p></div>
+  </div>
+
+  <!-- ══ TASKS ══ -->
+  <div id="sec-tasks" class="section">
+    <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between">
+      <div>
+        <div class="page-title">Tasks</div>
+        <div class="page-sub">Assigned tasks and self-initiated actions. Log everything — including things Ross or Ben send on Teams.</div>
+      </div>
+      <button class="btn btn-dark" onclick="toggleForm('task-form')">+ New task</button>
+    </div>
+
+    <div id="task-form" class="form-panel">
+      <div class="card-title">Add task</div>
+      <div class="frow"><input type="text" id="t-name" placeholder="What needs doing?"></div>
+      <div class="frow">
+        <select id="t-ws"><option value="">Workstream (optional)...</option></select>
+        <select id="t-source">
+          <option>Self-initiated</option><option>Ross — Teams</option><option>Ben — Teams</option>
+          <option>Ross — Email</option><option>Ben — Email</option><option>Meeting action</option><option>Other</option>
+        </select>
+      </div>
+      <div class="frow">
+        <select id="t-pri"><option>High</option><option>Medium</option><option>Low</option></select>
+        <input type="date" id="t-due" placeholder="Due date">
+      </div>
+      <div class="brow">
+        <button class="btn btn-dark" onclick="addTask()">Save task</button>
+        <button class="btn" onclick="toggleForm('task-form')">Cancel</button>
+      </div>
+    </div>
+
+    <div class="group-label">Open</div>
+    <div id="t-open"><p class="empty">No open tasks.</p></div>
+    <div class="group-label">Completed this week</div>
+    <div id="t-done"><p class="empty">Nothing completed yet.</p></div>
+  </div>
+
+  <!-- ══ NOTES ══ -->
+  <div id="sec-notes" class="section">
+    <div class="page-header">
+      <div class="page-title">Notes & log</div>
+      <div class="page-sub">Capture as you go — meetings, decisions, ideas, blockers. These feed your weekly report.</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+      <div class="card" style="margin-bottom:0">
+        <div class="card-title">Log a note</div>
+        <div class="frow">
+          <select id="n-ws"><option value="">Workstream (optional)...</option></select>
+          <select id="n-type">
+            <option>Progress update</option><option>Meeting note</option><option>Decision made</option>
+            <option>Idea / opportunity</option><option>Blocker / risk</option><option>General note</option>
+          </select>
+        </div>
+        <div class="frow"><textarea id="n-text" placeholder="What happened, what was decided, what did you think of? Be specific — this becomes your weekly report."></textarea></div>
+        <button class="btn btn-dark" onclick="addNote()">Log note</button>
+      </div>
+
+      <div class="card" style="margin-bottom:0">
+        <div class="card-title">Paste a call or meeting transcript</div>
+        <p style="font-size:13px;color:var(--ink-2);margin-bottom:0.875rem;line-height:1.6">Paste any transcript — Teams call, Zoom, voice note summary. The AI pulls out actions, decisions, and tasks and adds them directly to your log and task list.</p>
+        <textarea id="transcript-input" placeholder="Paste transcript here... Teams auto-transcription, Zoom notes, or even rough notes from a call." style="min-height:90px;margin-bottom:0.75rem"></textarea>
+        <select id="transcript-ws" style="margin-bottom:0.75rem"><option value="">Link to a workstream (optional)...</option></select>
+        <div id="transcript-loading" style="display:none;font-size:13px;color:var(--ink-3);margin-bottom:0.5rem">Analysing transcript...</div>
+        <button class="btn btn-dark" onclick="parseTranscript()">Extract actions & decisions →</button>
+      </div>
+    </div>
+
+    <!-- Transcript results panel -->
+    <div id="transcript-results" class="form-panel" style="margin-bottom:1rem">
+      <div class="card-label" style="margin-bottom:0.75rem">Extracted from transcript — review and save</div>
+      <div id="transcript-actions-list"></div>
+      <div class="brow">
+        <button class="btn btn-dark" onclick="saveTranscriptItems()">Save all to tasks & notes</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('transcript-results').classList.remove('open')">Discard</button>
+      </div>
+    </div>
+
+    <div class="group-label">This week</div>
+    <div id="n-list"><p class="empty">No notes yet. Start capturing as you work.</p></div>
+  </div>
+
+  <!-- ══ STRATEGIC COACH ══ -->
+  <div id="sec-coach" class="section">
+    <div class="page-header">
+      <div class="page-title">Strategic coach</div>
+      <div class="page-sub">Paste any task or challenge. Get back how a Director of Strategy would approach it.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">What are you working on?</div>
+      <p style="font-size:13px;color:var(--ink-2);margin-bottom:0.875rem;line-height:1.6">Drop in a task, a brief, a problem, or a question. The more context the better. This will build the strategic scaffold so you can stop staring at a blank page.</p>
+      <textarea id="coach-input" placeholder="e.g. 'We need to decide the Axium AI roadmap beyond launch — what capabilities to prioritise over the next 6 months and why' &#10;&#10;or &#10;&#10;'How do I approach the post-launch roadmap and tell the story of what's coming in season one?'" style="min-height:100px"></textarea>
+      <div class="brow">
+        <button class="btn btn-dark" onclick="runCoach()">How would a Director approach this? →</button>
+        <button class="btn" onclick="runStructure()">Build me a structure for this →</button>
+        <button class="btn" onclick="runQuestions()">What are the key questions? →</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Proactive ideas — what else should I be doing?</div>
+      <p style="font-size:13px;color:var(--ink-2);margin-bottom:0.875rem;line-height:1.6">Based on your active workstreams, the system generates high-impact work you haven't been asked for but should be doing. This is what separates an analyst from a Director.</p>
+      <button class="btn btn-dark" onclick="runProactiveIdeas()">Generate proactive work ideas →</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Director-level frameworks</div>
+      <p style="font-size:13px;color:var(--ink-2);margin-bottom:0.875rem;line-height:1.6">Build your strategic thinking toolkit. One framework explained and applied to Seven each session.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button class="intel-row" onclick="sendPrompt('Teach me the MECE principle as applied to strategy work. Explain it clearly, give me a concrete example from the sports betting / FTP gaming world — specifically how it would apply to structuring a product roadmap or a strategic recommendation. Then give me a checklist I can use when I\'m building any output at work. ↗')">
+          <div><div class="intel-title">MECE thinking</div><div class="intel-sub">Mutually exclusive, collectively exhaustive</div></div><div class="intel-arrow">→</div>
+        </button>
+        <button class="intel-row" onclick="sendPrompt('Teach me how to write a Director-level recommendation document — specifically the Situation / Complication / Resolution (SCR) or Pyramid Principle structure. Show me how I would apply this to writing a recommendation about the Axium AI roadmap for Seven. Give me a template I can follow. ↗')">
+          <div><div class="intel-title">Pyramid principle</div><div class="intel-sub">How Directors structure recommendations</div></div><div class="intel-arrow">→</div>
+        </button>
+        <button class="intel-row" onclick="sendPrompt('Explain how to do a proper competitive analysis — not just a feature comparison table, but a genuine strategic assessment of a competitor. Walk me through how I would do this for Super 6 vs Seven. What dimensions matter most? What questions should I be answering? What would make my analysis genuinely useful to a Director and a board? ↗')">
+          <div><div class="intel-title">Competitive analysis</div><div class="intel-sub">Beyond feature comparison</div></div><div class="intel-arrow">→</div>
+        </button>
+        <button class="intel-row" onclick="sendPrompt('Explain how to think about and build a strategic narrative — specifically how to tell the story of a product roadmap in a way that gets buy-in from senior stakeholders. Use the Seven post-launch roadmap as the example. What is the story structure? How do you make it feel inevitable? How do you handle uncertainty and risks? ↗')">
+          <div><div class="intel-title">Strategic narrative</div><div class="intel-sub">Getting buy-in from senior stakeholders</div></div><div class="intel-arrow">→</div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ COMMS HUB ══ -->
+  <div id="sec-comms" class="section">
+    <div class="page-header">
+      <div class="page-title">Comms hub</div>
+      <div class="page-sub">Never let Ross or Ben chase you for an update again. Generate, review, send.</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+      <div class="card">
+        <div class="card-label">Daily Teams update</div>
+        <p style="font-size:13px;color:var(--ink-2);margin-bottom:0.875rem;line-height:1.6">A short, confident paragraph for Ross and Ben. Send it by 4:30pm every day. Takes 30 seconds to review and paste.</p>
+        <button class="btn btn-dark" onclick="genDailyTeams()">Generate today's update →</button>
+      </div>
+      <div class="card">
+        <div class="card-label">Workstream status update</div>
+        <p style="font-size:13px;color:var(--ink-2);margin-bottom:0.875rem;line-height:1.6">Quick update on a specific workstream — for when something progresses or you need to flag something.</p>
+        <select id="comms-ws-sel" style="margin-bottom:0.75rem"><option value="">Select a workstream...</option></select>
+        <button class="btn" onclick="genWsUpdate()">Generate update →</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Weekly report — email to Ross & Ben</div>
+      <p style="font-size:13px;color:var(--ink-2);margin-bottom:0.875rem;line-height:1.6">Auto-built from everything you've logged this week. Review it, adjust if needed, then send. The goal: they never have to ask where things stand.</p>
+      <textarea id="report-extra" placeholder="Anything extra to include this week? Meetings attended, decisions made, things coming up next week..." style="margin-bottom:0.75rem;min-height:60px"></textarea>
+      <div class="brow">
+        <button class="btn btn-dark" onclick="genWeeklyReport()">Generate weekly report →</button>
+        <button class="btn" id="send-report-btn" style="display:none" onclick="openReportInOutlook()">Open in Outlook →</button>
+        <button class="btn" id="copy-report-btn" style="display:none" onclick="copyReport()">Copy</button>
+      </div>
+      <div id="report-preview" style="display:none" class="comms-preview"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Communication principles — Director level</div>
+      <div style="display:grid;gap:8px;margin-top:0.25rem">
+        <div style="display:flex;gap:10px;align-items:flex-start"><span class="tag tag-grey" style="flex-shrink:0">1</span><p style="font-size:13px">Lead with outcome, not activity. "Completed competitive analysis — recommendation is X" not "spent time researching competitors."</p></div>
+        <div style="display:flex;gap:10px;align-items:flex-start"><span class="tag tag-grey" style="flex-shrink:0">2</span><p style="font-size:13px">Surface risks before they become problems. "Flagging a potential dependency on engineering resource in week 3" shows you're ahead of it.</p></div>
+        <div style="display:flex;gap:10px;align-items:flex-start"><span class="tag tag-grey" style="flex-shrink:0">3</span><p style="font-size:13px">Connect your work to the big objective — beat Super 6, scale across Entain. Every update should feel like it's in service of something larger.</p></div>
+        <div style="display:flex;gap:10px;align-items:flex-start"><span class="tag tag-grey" style="flex-shrink:0">4</span><p style="font-size:13px">End with what you need from them. Forward the conversation — don't just report, advance.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ INDUSTRY INTEL ══ -->
+  <div id="sec-intel" class="section">
+    <div class="page-header">
+      <div class="page-title">Industry intelligence</div>
+      <div class="page-sub">Knowledge is leverage. Stay ahead of every room you're in.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Workstream-linked intelligence</div>
+      <p style="font-size:13px;color:var(--ink-2);margin-bottom:1rem;line-height:1.6">Your active workstreams, automatically turned into targeted industry searches.</p>
+      <div id="ws-intel-list"><p class="empty">Add workstreams to generate contextual intel topics.</p></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+      <div class="card">
+        <div class="card-label">Seven & FTP landscape</div>
+        <button class="intel-row" onclick="sendPrompt('Search for the latest news, product updates, and strategy around Super 6 by Sky Bet in the last 3-4 months. What are they doing — product changes, prize structure, marketing, user numbers if available. Then tell me: what does this mean strategically for Seven? Where are the gaps we can exploit? ↗')">
+          <div><div class="intel-title">Super 6 — what are they doing?</div><div class="intel-sub">Latest product & strategy moves</div></div><div class="intel-arrow">→</div>
+        </button>
+        <button class="intel-row" onclick="sendPrompt('Search for the latest trends in free-to-play (FTP) gaming in UK sports betting in 2025-2026. What are the major operators investing in? What engagement mechanics are working? What does the data say about FTP as an acquisition and retention tool? What should Seven be paying attention to? ↗')">
+          <div><div class="intel-title">UK FTP gaming — market trends</div><div class="intel-sub">What's working, what operators are building</div></div><div class="intel-arrow">→</div>
+        </button>
+        <button class="intel-row" onclick="sendPrompt('Search for successful gamification examples in sports apps and betting products — badges, streaks, halls of fame, progression systems, animations. What works and why? Give me 4-5 concrete examples with engagement data if available, then tell me which of these mechanics Seven should consider post-launch. ↗')">
+          <div><div class="intel-title">Gamification benchmarks</div><div class="intel-sub">Badges, streaks, progression — what works</div></div><div class="intel-arrow">→</div>
+        </button>
+        <button class="intel-row" onclick="sendPrompt('Search for examples of successful global expansion of sports gaming or FTP products — going from one market to multiple. What are the biggest challenges? What needs to be localised vs kept consistent? Use examples from betting, fantasy sports, or gaming. What does this mean for Seven\'s expansion plans across Entain\'s brands beyond Ladbrokes UK? ↗')">
+          <div><div class="intel-title">Market expansion playbooks</div><div class="intel-sub">How FTP products scale across markets</div></div><div class="intel-arrow">→</div>
+        </button>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Entain & broader market</div>
+        <button class="intel-row" onclick="sendPrompt('Search for the latest Entain company news, strategy updates, and BetMGM performance from the last 3 months. What are the group priorities? Any relevant announcements about free-to-play, product innovation, or UK market strategy? What should I as a strategy analyst at Angstrom Sports (an Entain company) be aware of? ↗')">
+          <div><div class="intel-title">Entain & BetMGM latest</div><div class="intel-sub">Group strategy & priorities</div></div><div class="intel-arrow">→</div>
+        </button>
+        <button class="intel-row" onclick="sendPrompt('Search for the latest developments in AI usage in sports apps — specifically player performance insights, prediction tools, personalisation, and fan engagement AI. What are companies like Stats Perform, Opta, Genius Sports, and others doing? What are sports apps like FPL, Sorare, DraftKings building? What is the state of AI in this space in 2026? ↗')">
+          <div><div class="intel-title">AI in sports apps — 2026</div><div class="intel-sub">What competitors are building with AI</div></div><div class="intel-arrow">→</div>
+        </button>
+        <button class="intel-row" onclick="sendPrompt('Search for the latest UK online sports betting regulatory news — anything affecting free-to-play games, jackpot promotions, cross-sell mechanics between FTP and real-money betting, or the UK Gambling Act. What are the regulatory risks and constraints for a product like Seven? What does compliance look like for a Ladbrokes-linked FTP game? ↗')">
+          <div><div class="intel-title">UK gambling regulation</div><div class="intel-sub">Risks & constraints for Seven</div></div><div class="intel-arrow">→</div>
+        </button>
+        <button class="intel-row" onclick="sendPrompt('Search for recent examples of cross-sell and acquisition mechanics between free-to-play games and real-money gambling products. What conversion rates are considered good? What are the best practices? What does the Sky Bet / Super 6 model achieve? How does Bet365, William Hill or others use FTP for acquisition? What lessons apply to Seven\'s x-sell into Ladbrokes? ↗')">
+          <div><div class="intel-title">FTP → real money cross-sell</div><div class="intel-sub">Conversion benchmarks & best practice</div></div><div class="intel-arrow">→</div>
+        </button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Custom search</div>
+      <textarea id="custom-intel" placeholder="What do you want to know about? Be specific — e.g. 'What is Sorare doing in the UK market?' or 'How do sports betting apps use push notifications for re-engagement?'" style="min-height:60px"></textarea>
+      <div class="brow"><button class="btn btn-dark" onclick="runCustomIntel()">Search & synthesise →</button></div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+// ── State ──────────────────────────────────────────────
+let S = { workstreams:[], tasks:[], notes:[] };
+
+const QUESTIONS = [
+  "Super 6 has roughly 1 million weekly active users. If Seven is to overtake it in 3 years, what needs to be true about your product, distribution, and prize structure? Work backwards from the number.",
+  "Entain operates across 30+ markets and brands. How would you make the internal case that Seven should be the FTP platform for all of them — not just Ladbrokes UK?",
+  "A Director of Strategy always asks: what does success actually look like in 12 months? Write down 3 metrics that would tell you Seven is on track, and what's your current baseline for each?",
+  "The SkyBet/Super 6 model is your blueprint. But blueprints can also be constraints. What would Seven look like if you ignored everything Super 6 did and designed it entirely around the modern UK football fan in 2026?",
+  "Cross-sell from Seven into Ladbrokes is a core commercial objective. Map the user journey from Seven to Ladbrokes — where are the friction points, and what one change would most move the conversion rate?",
+  "If you were presenting Seven's strategic opportunity to Entain's Group Strategy Director, what would be the single most important slide — and what data would make it undeniable?",
+  "BetMGM and US sports. FTP is exploding in the US market. What would a Seven US strategy look like, and what would you need to prove first in the UK before making that case?",
+  "You are working at the intersection of sports data, product, and commercial strategy. What is the one thing you know about Seven's product or market that your managers don't — and why haven't you said it yet?",
+  "What is the biggest risk to Seven's August launch that no one is talking about? What would you do about it if you owned it?",
+  "Axium AI is adding player and team insights. How does AI genuinely improve the player experience in Seven — not as a feature, but as something that makes people win more or enjoy the game more? Where is the real value?"
+];
+
+// ── Init ───────────────────────────────────────────────
+async function init() {
+  await loadData();
+  setDate();
+  setQuestion();
+  render();
+  populateSelects();
+  updateMetrics();
+}
+
+async function loadData() {
+  try {
+    const r = await window.storage.get('seven-os-v2');
+    if (r && r.value) S = JSON.parse(r.value);
+  } catch(e) {}
+}
+
+async function save() {
+  try { await window.storage.set('seven-os-v2', JSON.stringify(S)); } catch(e) {}
+}
+
+function setDate() {
+  const d = new Date();
+  const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+  const str = d.toLocaleDateString('en-GB', opts);
+  const h = d.getHours();
+  const g = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('greeting').textContent = `${g}, Ethan`;
+  document.getElementById('full-date').textContent = str;
+  document.getElementById('sb-date').textContent = d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+}
+
+function setQuestion() {
+  const idx = new Date().getDay();
+  document.getElementById('day-q').textContent = QUESTIONS[idx % QUESTIONS.length];
+}
+
+function today() { return new Date().toISOString().slice(0,10); }
+function weekStart() {
+  const d = new Date(); const day = d.getDay();
+  const diff = d.getDate() - day + (day===0?-6:1);
+  d.setDate(diff); return d.toISOString().slice(0,10);
+}
+
+// ── Navigation ─────────────────────────────────────────
+function tab(id, el) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('sec-'+id).classList.add('active');
+  el.classList.add('active');
+  if(id==='tasks'){populateTaskWs();}
+  if(id==='notes'){populateNoteWs();}
+  if(id==='comms'){populateCommsWs();}
+  if(id==='intel'){renderWsIntel();}
+}
+
+function toggleForm(id) {
+  const f = document.getElementById(id);
+  f.classList.toggle('open');
+  if(id==='task-form' && f.classList.contains('open')) populateTaskWs();
+}
+
+// ── Metrics ────────────────────────────────────────────
+function updateMetrics() {
+  const t = today(); const ws = weekStart();
+  document.getElementById('m-ws').textContent = S.workstreams.filter(w=>w.status==='In progress').length;
+  document.getElementById('m-today').textContent = S.tasks.filter(t2=>t2.due===t&&!t2.done).length;
+  const over = S.tasks.filter(t2=>t2.due&&t2.due<t&&!t2.done).length;
+  document.getElementById('m-over').textContent = over;
+  document.getElementById('m-notes').textContent = S.notes.filter(n=>n.date>=ws).length;
+}
+
+// ── Workstreams ────────────────────────────────────────
+function addWorkstream() {
+  const n = document.getElementById('ws-name').value.trim();
+  if(!n) return;
+  S.workstreams.push({
+    id: Date.now(),
+    name: n,
+    area: document.getElementById('ws-area').value,
+    status: document.getElementById('ws-status').value,
+    desc: document.getElementById('ws-desc').value.trim(),
+    owner: document.getElementById('ws-owner').value.trim(),
+    due: document.getElementById('ws-due').value,
+    created: today(), updated: today()
+  });
+  save(); renderWorkstreams(); updateMetrics();
+  toggleForm('ws-form');
+  ['ws-name','ws-desc','ws-owner'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('ws-due').value='';
+}
+
+function deleteWs(id) {
+  if(!confirm('Remove this workstream?')) return;
+  S.workstreams = S.workstreams.filter(w=>w.id!==id);
+  save(); renderWorkstreams(); updateMetrics();
+}
+
+const sCol = { 'In progress':'tag-green','Blocked':'tag-red','On hold':'tag-amber','Complete':'tag-grey' };
+const aCol = { 'Product strategy':'tag-blue','Commercial':'tag-teal','Growth & acquisition':'tag-green','Data & analytics':'tag-purple','Partnerships':'tag-amber','Roadmap planning':'tag-purple','Comms & reporting':'tag-teal','Operations':'tag-grey','Self-initiated':'tag-grey' };
+
+function renderWorkstreams() {
+  const el = document.getElementById('ws-list');
+  if(!S.workstreams.length){el.innerHTML='<p class="empty">No workstreams yet.</p>';return;}
+  el.innerHTML = S.workstreams.map(w=>`
+    <div class="ws-card">
+      <div class="ws-top">
+        <div class="ws-name">${w.name}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;flex-shrink:0">
+          ${w.area?`<span class="tag ${aCol[w.area]||'tag-grey'}">${w.area}</span>`:''}
+          <span class="tag ${sCol[w.status]||'tag-grey'}">${w.status}</span>
+        </div>
+      </div>
+      ${w.desc?`<div class="ws-desc">${w.desc}</div>`:''}
+      <div class="ws-meta">
+        ${w.owner?`<span style="font-size:12px;color:var(--ink-3)">Stakeholders: ${w.owner}</span>`:''}
+        ${w.due?`<span style="font-size:12px;color:var(--ink-3)">Target: ${w.due}</span>`:''}
+        <span style="font-size:12px;color:var(--ink-3)">Updated: ${w.updated}</span>
+      </div>
+      <div class="ws-actions">
+        <button class="btn btn-sm btn-dark" onclick="coachOnWs(${w.id})">Director lens →</button>
+        <button class="btn btn-sm" onclick="intelOnWs(${w.id})">Industry intel →</button>
+        <button class="btn btn-sm" onclick="updateWsStatus(${w.id})">Update status</button>
+        <button class="btn btn-sm btn-ghost" onclick="deleteWs(${w.id})">Remove</button>
+      </div>
+    </div>`).join('');
+}
+
+function coachOnWs(id) {
+  const w = S.workstreams.find(x=>x.id===id);
+  if(!w) return;
+  sendPrompt(`I am a Strategy Analyst at Angstrom Sports working on a workstream called "${w.name}". Context: ${w.desc||'No description added yet.'}. Stakeholders: ${w.owner||'TBC'}. I work on Seven — a free-to-play football game (pick 7 players to score first or last goal, linked to Ladbrokes, goal is to beat Super 6 and become the best FTP game in the UK OSB market). Acting as a Director of Strategy coach: 1) How would a Director frame this workstream — what is the real strategic question being answered? 2) What are the 4-5 most important questions I need to answer to make progress? 3) What framework or structure should I use for my output? 4) What am I probably missing or assuming? 5) What would a truly excellent piece of work on this look like? Be rigorous and specific to sports betting and FTP gaming. ↗`);
+}
+
+function intelOnWs(id) {
+  const w = S.workstreams.find(x=>x.id===id);
+  if(!w) return;
+  sendPrompt(`Search for current industry news, competitor activity, and relevant developments related to this workstream: "${w.name}". Context: ${w.desc||''}. I work on Seven (free-to-play football game by Angstrom Sports, linked to Ladbrokes, competing with Super 6). Give me: 1) 3-4 relevant recent news items or market developments 2) What analogous products or competitors are doing in this area 3) One key strategic insight I should factor into my work on this based on what's happening in the market. Be specific. ↗`);
+}
+
+function updateWsStatus(id) {
+  const w = S.workstreams.find(x=>x.id===id);
+  if(!w) return;
+  const statuses = ['In progress','Blocked','On hold','Complete'];
+  const curr = statuses.indexOf(w.status);
+  const next = prompt(`Update status for "${w.name}".\nOptions: In progress / Blocked / On hold / Complete\nCurrent: ${w.status}`, w.status);
+  if(next && statuses.includes(next)){
+    w.status = next; w.updated = today();
+    save(); renderWorkstreams(); updateMetrics();
+  }
+}
+
+// ── Tasks ──────────────────────────────────────────────
+function populateTaskWs() {
+  const sel = document.getElementById('t-ws');
+  if(!sel) return;
+  sel.innerHTML = '<option value="">Workstream (optional)...</option>' + S.workstreams.map(w=>`<option value="${w.id}">${w.name}</option>`).join('');
+}
+
+function addTask() {
+  const n = document.getElementById('t-name').value.trim();
+  if(!n) return;
+  const wsId = document.getElementById('t-ws').value;
+  const ws = S.workstreams.find(w=>w.id==wsId);
+  S.tasks.push({
+    id: Date.now(), name: n,
+    wsId, wsName: ws?ws.name:'',
+    source: document.getElementById('t-source').value,
+    priority: document.getElementById('t-pri').value,
+    due: document.getElementById('t-due').value,
+    done: false, doneDate: null,
+    created: today()
+  });
+  save(); renderTasks(); renderDailyTasks(); updateMetrics();
+  toggleForm('task-form');
+  document.getElementById('t-name').value='';
+  document.getElementById('t-due').value='';
+}
+
+function toggleTask(id) {
+  const t = S.tasks.find(x=>x.id===id);
+  if(!t) return;
+  t.done = !t.done; t.doneDate = t.done ? today() : null;
+  save(); renderTasks(); renderDailyTasks(); updateMetrics();
+}
+
+const priColor = { High:'tag-red', Medium:'tag-amber', Low:'tag-grey' };
+
+function renderTasks() {
+  const t = today(); const ws = weekStart();
+  const open = S.tasks.filter(x=>!x.done);
+  const done = S.tasks.filter(x=>x.done && x.doneDate>=ws);
+  const renderItem = x => {
+    const isOver = x.due && x.due < t && !x.done;
+    return `<div class="task-row">
+      <div class="chk ${x.done?'done':''}" onclick="toggleTask(${x.id})"></div>
+      <div class="task-body">
+        <div class="task-name ${x.done?'done':''}">${x.name}</div>
+        <div class="task-sub">
+          <span class="tag ${priColor[x.priority]||'tag-grey'}" style="font-size:10px">${x.priority}</span>
+          ${x.wsName?`<span class="tag tag-blue" style="font-size:10px">${x.wsName}</span>`:''}
+          ${x.source&&x.source!=='Self-initiated'?`<span class="tag tag-grey" style="font-size:10px">${x.source}</span>`:''}
+          ${x.due?`<span style="font-size:12px;color:${isOver?'var(--red)':'var(--ink-3)'}">${isOver?'⚠ Overdue: ':'Due: '}${x.due}</span>`:''}
+        </div>
+      </div>
+    </div>`;
+  };
+  document.getElementById('t-open').innerHTML = open.length ? open.map(renderItem).join('') : '<p class="empty">No open tasks.</p>';
+  document.getElementById('t-done').innerHTML = done.length ? done.map(renderItem).join('') : '<p class="empty">Nothing completed yet.</p>';
+}
+
+function renderDailyTasks() {
+  const t = today();
+  const items = S.tasks.filter(x=>x.due===t);
+  const el = document.getElementById('daily-tasks');
+  if(!items.length){el.innerHTML='<p class="empty">No tasks due today. Add tasks with today\'s date in the Tasks tab.</p>';return;}
+  const renderItem = x => `<div class="task-row">
+    <div class="chk ${x.done?'done':''}" onclick="toggleTask(${x.id}); renderDailyTasks()"></div>
+    <div class="task-body">
+      <div class="task-name ${x.done?'done':''}">${x.name}</div>
+      <div class="task-sub">
+        <span class="tag ${priColor[x.priority]||'tag-grey'}" style="font-size:10px">${x.priority}</span>
+        ${x.wsName?`<span class="tag tag-blue" style="font-size:10px">${x.wsName}</span>`:''}
+      </div>
+    </div>
+  </div>`;
+  el.innerHTML = items.map(renderItem).join('');
+}
+
+// ── Notes ──────────────────────────────────────────────
+function populateNoteWs() {
+  const sel = document.getElementById('n-ws');
+  const tsel = document.getElementById('transcript-ws');
+  const opts = '<option value="">Workstream (optional)...</option>' + S.workstreams.map(w=>`<option value="${w.id}">${w.name}</option>`).join('');
+  if(sel) sel.innerHTML = opts;
+  if(tsel) tsel.innerHTML = opts;
+}
+
+function addNote() {
+  const txt = document.getElementById('n-text').value.trim();
+  if(!txt) return;
+  const wsId = document.getElementById('n-ws').value;
+  const ws = S.workstreams.find(w=>w.id==wsId);
+  S.notes.push({
+    id: Date.now(), text: txt,
+    wsName: ws?ws.name:'',
+    type: document.getElementById('n-type').value,
+    date: today(),
+    time: new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})
+  });
+  save(); renderNotes(); updateMetrics();
+  document.getElementById('n-text').value='';
+}
+
+const nTypeCol = { 'Progress update':'tag-teal','Meeting note':'tag-blue','Decision made':'tag-green','Idea / opportunity':'tag-purple','Blocker / risk':'tag-red','General note':'tag-grey' };
+
+function renderNotes() {
+  const el = document.getElementById('n-list');
+  const ws = weekStart();
+  const items = S.notes.filter(n=>n.date>=ws).slice().reverse();
+  if(!items.length){el.innerHTML='<p class="empty">No notes this week.</p>';return;}
+  el.innerHTML = items.map(n=>`
+    <div class="note-item">
+      <div class="note-header">
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <span class="tag ${nTypeCol[n.type]||'tag-grey'}" style="font-size:10px">${n.type}</span>
+          ${n.wsName?`<span class="tag tag-blue" style="font-size:10px">${n.wsName}</span>`:''}
+        </div>
+        <span class="note-time">${n.date} ${n.time}</span>
+      </div>
+      <div class="note-body">${n.text}</div>
+    </div>`).join('');
+}
+
+// ── Comms ──────────────────────────────────────────────
+function populateCommsWs() {
+  const sel = document.getElementById('comms-ws-sel');
+  if(!sel) return;
+  sel.innerHTML = '<option value="">Select a workstream...</option>' + S.workstreams.map(w=>`<option value="${w.id}">${w.name}</option>`).join('');
+}
+
+function getWsSummary() {
+  if(!S.workstreams.length) return 'No workstreams added yet.';
+  return S.workstreams.filter(w=>w.status==='In progress').map(w=>`"${w.name}" (${w.area||'strategy'}, ${w.status}): ${w.desc||'No description'}`).join(' | ') || 'No active workstreams.';
+}
+
+function getNotesSummary() {
+  const ws = weekStart();
+  const items = S.notes.filter(n=>n.date>=ws);
+  if(!items.length) return 'No notes logged this week.';
+  return items.map(n=>`[${n.type}${n.wsName?' — '+n.wsName:''}]: ${n.text}`).join('\n');
+}
+
+function getCompletedTasks() {
+  const ws = weekStart();
+  return S.tasks.filter(t=>t.done&&t.doneDate>=ws).map(t=>t.name).join(', ') || 'None logged.';
+}
+
+function genDailyTeams() {
+  sendPrompt(`Write a short, confident daily Teams update message for me to send to Ross Jarvis (Director of Strategy) and Ben Porter (Strategy Manager) at Angstrom Sports. I am Strategy Analyst Ethan Rand working on Seven (free-to-play football game, linked to Ladbrokes, goal to beat Super 6). Active workstreams: ${getWsSummary()}. Notes/progress today: ${getNotesSummary()}. Completed tasks: ${getCompletedTasks()}. Format: 2-4 short sentences. Lead with what moved forward, flag anything blocked, mention what I'm focused on next. Confident tone — not apologetic, not over-detailed. Just write the message, no preamble. ↗`);
+}
+
+function genWsUpdate() {
+  const wsId = document.getElementById('comms-ws-sel').value;
+  const w = S.workstreams.find(x=>x.id==wsId);
+  if(!w){alert('Select a workstream first.');return;}
+  const relNotes = S.notes.filter(n=>n.wsName===w.name).slice(-5).map(n=>n.text).join(' | ');
+  sendPrompt(`Write a brief workstream status update I can paste into a Teams message or email to Ross and Ben. Workstream: "${w.name}". Status: ${w.status}. Description: ${w.desc||''}. Recent notes: ${relNotes||'None'}. Format: 3-5 sentences. Cover what the workstream is, where it's at now, what's been done recently, what's next, and any flags or asks. Tone: clear and professional. Just write the update, no preamble. ↗`);
+}
+
+function genWeeklyReport() {
+  const extra = document.getElementById('report-extra').value.trim();
+  sendPrompt(`Write a polished weekly status report email for me — Strategy Analyst Ethan Rand at Angstrom Sports — to send to Ross Jarvis (Director of Strategy) and Ben Porter (Strategy Manager). Product context: Seven is a free-to-play football game we are building, linked to Ladbrokes, goal is to beat Super 6 and become the best FTP game in UK OSB. Active workstreams: ${getWsSummary()}. Notes from this week: ${getNotesSummary()}. Completed tasks: ${getCompletedTasks()}. ${extra?'Additional context: '+extra:''} Structure: Subject line / 1-sentence headline of the week / Workstream updates (impact-led bullets) / Decisions made / Risks or blockers + my recommended action / Next week priorities / What I need from Ross and Ben. Tone: confident, senior-readership-ready, concise. They should be able to skim it in 90 seconds and feel fully informed. Write the full email including subject line. ↗`);
+}
+
+function sendWeeklyReport() {
+  const preview = document.getElementById('report-preview').textContent;
+  sendPrompt(`Please send the following email via Gmail to Ethan.Rand@EntainGroup.com. This is my weekly report for my own review before sending to managers. Subject: "Seven OS — Weekly Report". Body: ${preview} ↗`);
+}
+
+// ── Strategic Coach ────────────────────────────────────
+function runCoach() {
+  const input = document.getElementById('coach-input').value.trim();
+  if(!input){alert('Describe the task or challenge first.');return;}
+  sendPrompt(`I am Strategy Analyst Ethan Rand at Angstrom Sports building Seven (free-to-play football game, pick 7 players to score first or last goal, Ladbrokes integration, objective: beat Super 6). I want to approach this like a Director of Strategy: "${input}". Give me: 1) How a Director would reframe this problem — what is the real strategic question? 2) The 4-5 questions I need to answer before I do anything else 3) The right framework or structure to use (be specific — name it, explain it) 4) What assumptions I'm probably making that I should challenge 5) One non-obvious or contrarian angle worth considering 6) What an excellent output would look like. Be rigorous and specific to the FTP gaming / sports betting context. ↗`);
+}
+
+function runStructure() {
+  const input = document.getElementById('coach-input').value.trim();
+  if(!input){alert('Describe the task or challenge first.');return;}
+  sendPrompt(`Build me a clear document structure for this piece of work: "${input}". I work on Seven at Angstrom Sports. Give me: the recommended format (doc, slide, memo?), a section-by-section structure with what each section should contain, the right level of detail for the audience (likely my Director of Strategy, Ross Jarvis), and a suggested time allocation for each section. Make it something I can follow immediately. ↗`);
+}
+
+function runQuestions() {
+  const input = document.getElementById('coach-input').value.trim();
+  if(!input){alert('Describe the task or challenge first.');return;}
+  sendPrompt(`For this task: "${input}" — I work on Seven (free-to-play football game at Angstrom Sports). Give me the 8-10 most important questions I need to answer before I can complete this work well. Order them by priority. For each question, explain briefly why it matters and who or what would help me answer it. ↗`);
+}
+
+function runProactiveIdeas() {
+  sendPrompt(`I am Strategy Analyst Ethan Rand at Angstrom Sports. I am working on Seven — a free-to-play football game (pick 7 players to score first or last goal, Ladbrokes integration, objective to beat Super 6 and become the best FTP game in UK OSB market). My active workstreams: ${getWsSummary()}. My goal is to operate at Director of Strategy level — generating my own strategic work, not just reacting to what I'm assigned. Generate 5 high-impact pieces of work I am probably NOT doing right now that would make me stand out. For each: give it a name, explain why it matters strategically, connect it to the bigger picture (Seven's growth, Entain value, beating Super 6), and give me the very first concrete action I'd take. Mix short-term (can start this week) and medium-term (next month). Be specific — not generic strategy advice. ↗`);
+}
+
+// ── Intel ──────────────────────────────────────────────
+function renderWsIntel() {
+  const el = document.getElementById('ws-intel-list');
+  const active = S.workstreams.filter(w=>w.status==='In progress');
+  if(!active.length){el.innerHTML='<p class="empty">Add active workstreams to generate contextual intel topics.</p>';return;}
+  el.innerHTML = active.map(w=>`
+    <button class="intel-row" onclick="intelOnWs(${w.id})">
+      <div>
+        <div class="intel-title">${w.name}</div>
+        <div class="intel-sub">${w.area||'Strategy'} · Search industry news tied to this workstream</div>
+      </div>
+      <div class="intel-arrow">→</div>
+    </button>`).join('');
+}
+
+function runCustomIntel() {
+  const q = document.getElementById('custom-intel').value.trim();
+  if(!q){alert('Enter a search topic first.');return;}
+  sendPrompt(`Search for current information and analysis on: "${q}". Then give me a strategic synthesis specifically relevant to someone working on Seven — a free-to-play football game built by Angstrom Sports, linked to Ladbrokes, aiming to beat Super 6 in the UK OSB market. Key findings + strategic implications for Seven specifically. Be specific and actionable. ↗`);
+}
+
+// ── Outlook email helpers ──────────────────────────────
+let briefingContent = '';
+let reportContent = '';
+
+function openInOutlook(subject, body) {
+  // mailto opens the default mail client (Outlook on their machine)
+  const maxBody = body.slice(0, 1800); // mailto body limit
+  const url = `mailto:Ethan.Rand@EntainGroup.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(maxBody)}`;
+  window.open(url, '_blank');
+}
+
+function copyToClipboard(text) {
+  if(navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(()=>alert('Copied to clipboard!')).catch(()=>fallbackCopy(text));
+  } else { fallbackCopy(text); }
+}
+
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text; document.body.appendChild(ta); ta.select();
+  document.execCommand('copy'); document.body.removeChild(ta);
+  alert('Copied to clipboard!');
+}
+
+async function generateMorningBriefing() {
+  const t = today();
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
+  const tomorrowStr = tomorrow.toISOString().slice(0,10);
+  const overdueTasks = S.tasks.filter(x=>x.due&&x.due<t&&!x.done).map(x=>x.name).join(', ')||'None';
+  const todayTasks = S.tasks.filter(x=>x.due===t&&!x.done).map(x=>`[${x.priority}] ${x.name}`).join('\n')||'No tasks scheduled for today';
+  const q = document.getElementById('day-q').textContent;
+
+  document.getElementById('briefing-loading').style.display='block';
+  document.getElementById('briefing-btn').disabled=true;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:600,
+        messages:[{role:'user',content:`Write a sharp morning briefing email for Ethan Rand, Strategy Analyst at Angstrom Sports. He is building Seven — a free-to-play football game linked to Ladbrokes, goal to beat Super 6. Write ONLY the email body (no subject line), plain text, using these exact sections with emoji headers:
+
+📋 TODAY'S PRIORITIES
+Tasks: ${todayTasks}
+Frame the top 1-2 tasks strategically — what matters most and the Director-level angle on each.
+
+⚠️ OVERDUE
+${overdueTasks === 'None' ? 'Nothing overdue. Clean slate.' : 'Flag these: ' + overdueTasks}
+
+🔄 WORKSTREAM PULSE
+${getWsSummary() === 'No active workstreams.' ? 'No active workstreams yet — add them to the Workstreams tab.' : getWsSummary()}
+One punchy sentence per workstream on what to move today.
+
+🧠 DIRECTOR QUESTION
+${q}
+
+💡 PROACTIVE IDEA
+Based on the workstreams, one high-impact thing Ethan could do today that he hasn't been asked for.
+
+Keep total under 280 words. Confident, direct tone — like a smart colleague briefing you, not a corporate bot.`}]
+      })
+    });
+    const data = await res.json();
+    briefingContent = data.content.filter(b=>b.type==='text').map(b=>b.text).join('').trim();
+    document.getElementById('briefing-preview').textContent = briefingContent;
+    document.getElementById('briefing-preview-wrap').style.display='block';
+  } catch(e) {
+    // Fallback briefing if API fails
+    briefingContent = `Good morning, Ethan.\n\n📋 TODAY'S PRIORITIES\n${todayTasks}\n\n⚠️ OVERDUE\n${overdueTasks}\n\n🔄 WORKSTREAM PULSE\n${getWsSummary()}\n\n🧠 DIRECTOR QUESTION\n${q}\n\n💡 PROACTIVE IDEA\nBuild a one-page competitive teardown of Super 6 — not features, but why people play it and where Seven wins. Self-initiated work like this gets noticed.`;
+    document.getElementById('briefing-preview').textContent = briefingContent;
+    document.getElementById('briefing-preview-wrap').style.display='block';
+  }
+  document.getElementById('briefing-loading').style.display='none';
+  document.getElementById('briefing-btn').disabled=false;
+}
+
+function openBriefingInOutlook() {
+  const t = today();
+  openInOutlook(`Seven OS — Morning Briefing · ${t}`, briefingContent);
+}
+
+function copyBriefing() { copyToClipboard(briefingContent); }
+
+// ── Weekly report Outlook ──────────────────────────────
+function genWeeklyReport() {
+  const extra = document.getElementById('report-extra').value.trim();
+  const weekNotes = S.notes.filter(n=>n.date>=weekStart());
+  const noteSummary = weekNotes.length ? weekNotes.map(n=>`[${n.type}${n.wsName?' — '+n.wsName:''}]: ${n.text}`).join('\n') : 'No notes logged this week.';
+  const tasksDone = getCompletedTasks();
+
+  sendPrompt(`Write a polished weekly status report email body (no subject) for Ethan Rand — Strategy Analyst at Angstrom Sports — to send to Ross Jarvis (Director of Strategy) and Ben Porter (Strategy Manager). Context: Seven is a free-to-play football game linked to Ladbrokes, goal is to beat Super 6. Active workstreams: ${getWsSummary()}. Notes this week: ${noteSummary}. Completed tasks: ${tasksDone}. ${extra?'Extra context: '+extra:''} Structure: Opening headline sentence / Workstream updates (impact-led, not activity-led) / Decisions made / Risks or blockers + recommended action / Next week priorities / What I need from Ross and Ben. Tone: confident, senior-readership-ready, 90-second skim. After generating, the user will copy or open in Outlook. ↗`);
+
+  // Show the Outlook buttons after a delay
+  setTimeout(()=>{
+    document.getElementById('send-report-btn').style.display='inline-flex';
+    document.getElementById('copy-report-btn').style.display='inline-flex';
+  }, 2000);
+}
+
+function openReportInOutlook() {
+  const preview = document.getElementById('report-preview');
+  const content = preview ? preview.textContent : 'See weekly report generated in chat above.';
+  const d = new Date(); const weekLabel = `w/c ${weekStart()}`;
+  openInOutlook(`Seven OS — Weekly Update · ${weekLabel}`, content || 'See weekly report generated above — copy into this email.');
+}
+
+function copyReport() {
+  const preview = document.getElementById('report-preview');
+  copyToClipboard(preview ? preview.textContent : 'Generate the report first in the chat above, then copy it here.');
+}
+
+function sendMorningBriefing() { generateMorningBriefing(); }
+function sendWeeklyReport() { openReportInOutlook(); }
+
+// ── Render all ─────────────────────────────────────────
+function render() {
+  renderWorkstreams(); renderTasks(); renderNotes(); renderDailyTasks();
+}
+
+function populateSelects() {
+  populateTaskWs(); populateNoteWs(); populateCommsWs();
+}
+
+// ── Parse message into workstream ─────────────────────
+async function parseMessage() {
+  const msg = document.getElementById('ws-parse-input').value.trim();
+  if(!msg){alert('Paste a message first.');return;}
+  const source = document.getElementById('parse-source').value;
+  document.getElementById('ws-parse-loading').style.display='block';
+  document.getElementById('ws-parse-btn-row').style.display='none';
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        messages:[{role:'user',content:`You are helping Ethan Rand, a Strategy Analyst at Angstrom Sports working on Seven (free-to-play football game linked to Ladbrokes, goal to beat Super 6). He received this message from ${source}: """${msg}""" Extract a workstream from this message. Respond ONLY with valid JSON, no markdown, no backticks: {"name":"short workstream name","area":"one of: Product strategy / Commercial / Growth & acquisition / Data & analytics / Partnerships / Roadmap planning / Comms & reporting / Operations / Self-initiated","status":"In progress","desc":"2-3 sentence description of what the workstream is, what the goal is, and what Ethan needs to do","owner":"who sent this or who else is involved","tasks":"comma-separated list of immediate concrete tasks extracted from the message"}`}]
+      })
+    });
+    const data = await res.json();
+    const text = data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+    const clean = text.replace(/```json|```/g,'').trim();
+    const parsed = JSON.parse(clean);
+    document.getElementById('wsp-name').value = parsed.name||'';
+    document.getElementById('wsp-area').value = parsed.area||'';
+    document.getElementById('wsp-status').value = parsed.status||'In progress';
+    document.getElementById('wsp-desc').value = parsed.desc||'';
+    document.getElementById('wsp-owner').value = parsed.owner||source;
+    document.getElementById('wsp-tasks').value = parsed.tasks||'';
+    document.getElementById('ws-parse-preview').style.display='block';
+  } catch(e) {
+    alert('Could not parse message. Try again or add manually.');
+  }
+  document.getElementById('ws-parse-loading').style.display='none';
+  document.getElementById('ws-parse-btn-row').style.display='flex';
+}
+
+function saveParseWs() {
+  const name = document.getElementById('wsp-name').value.trim();
+  if(!name){alert('Workstream needs a name.');return;}
+  const tasks = document.getElementById('wsp-tasks').value.trim();
+  S.workstreams.push({
+    id:Date.now(), name,
+    area:document.getElementById('wsp-area').value,
+    status:document.getElementById('wsp-status').value,
+    desc:document.getElementById('wsp-desc').value.trim(),
+    owner:document.getElementById('wsp-owner').value.trim(),
+    due:'', created:today(), updated:today()
+  });
+  // Also add extracted tasks
+  if(tasks) {
+    tasks.split(',').forEach(t=>{
+      const tname = t.trim();
+      if(!tname) return;
+      S.tasks.push({
+        id:Date.now()+Math.random(), name:tname,
+        wsId:'', wsName:name,
+        source:document.getElementById('parse-source').value,
+        priority:'High', due:'', done:false, doneDate:null, created:today()
+      });
+    });
+  }
+  save(); renderWorkstreams(); renderTasks(); updateMetrics();
+  toggleForm('ws-parse-form');
+  document.getElementById('ws-parse-input').value='';
+  document.getElementById('ws-parse-preview').style.display='none';
+}
+
+// ── Parse transcript ───────────────────────────────────
+let transcriptItems = [];
+
+async function parseTranscript() {
+  const text = document.getElementById('transcript-input').value.trim();
+  if(!text){alert('Paste a transcript first.');return;}
+  const wsId = document.getElementById('transcript-ws').value;
+  const ws = S.workstreams.find(w=>w.id==wsId);
+  document.getElementById('transcript-loading').style.display='block';
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1200,
+        messages:[{role:'user',content:`You are helping Ethan Rand, a Strategy Analyst at Angstrom Sports working on Seven (free-to-play football game, goal to beat Super 6). Analyse this call or meeting transcript and extract everything actionable. ${ws?'This relates to workstream: '+ws.name+'.':''} Transcript: """${text}""" Respond ONLY with valid JSON, no markdown, no backticks: {"summary":"2 sentence summary of the call","decisions":[{"text":"decision made"}],"tasks":[{"text":"action item","owner":"who owns it — Ethan or someone else","priority":"High or Medium or Low"}],"risks":[{"text":"risk or blocker mentioned"}],"ideas":[{"text":"idea or opportunity surfaced"}]}`}]
+      })
+    });
+    const data = await res.json();
+    const raw = data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+    const clean = raw.replace(/```json|```/g,'').trim();
+    const parsed = JSON.parse(clean);
+    transcriptItems = parsed;
+    renderTranscriptResults(parsed, ws?ws.name:'');
+    document.getElementById('transcript-results').classList.add('open');
+  } catch(e) {
+    alert('Could not parse transcript. Try again.');
+  }
+  document.getElementById('transcript-loading').style.display='none';
+}
+
+function renderTranscriptResults(p, wsName) {
+  const el = document.getElementById('transcript-actions-list');
+  let html = '';
+  if(p.summary) html += `<div style="font-size:14px;font-weight:500;color:var(--ink);margin-bottom:1rem;padding:0.75rem;background:#f0fdf4;border-radius:8px;line-height:1.6">${p.summary}</div>`;
+  if(p.tasks&&p.tasks.length){
+    html += `<div class="card-label" style="margin-bottom:0.5rem">Tasks & actions (${p.tasks.length})</div>`;
+    html += p.tasks.map((t,i)=>`
+      <div style="display:flex;align-items:flex-start;gap:10px;padding:0.5rem 0;border-bottom:1px solid var(--border)">
+        <input type="checkbox" id="tr-t-${i}" checked style="margin-top:3px;width:auto;flex-shrink:0">
+        <div style="flex:1">
+          <div style="font-size:13px;color:var(--ink)">${t.text}</div>
+          <div style="display:flex;gap:6px;margin-top:4px">
+            <span class="tag ${t.priority==='High'?'tag-red':t.priority==='Medium'?'tag-amber':'tag-grey'}" style="font-size:10px">${t.priority}</span>
+            ${t.owner&&t.owner.toLowerCase()!=='ethan'?`<span class="tag tag-blue" style="font-size:10px">Owner: ${t.owner}</span>`:''}
+          </div>
+        </div>
+      </div>`).join('');
+  }
+  if(p.decisions&&p.decisions.length){
+    html += `<div class="card-label" style="margin:0.75rem 0 0.5rem">Decisions made</div>`;
+    html += p.decisions.map((d,i)=>`
+      <div style="display:flex;gap:10px;align-items:flex-start;padding:0.5rem 0;border-bottom:1px solid var(--border)">
+        <input type="checkbox" id="tr-d-${i}" checked style="margin-top:3px;width:auto;flex-shrink:0">
+        <span style="font-size:13px;color:var(--ink)">${d.text}</span>
+      </div>`).join('');
+  }
+  if(p.risks&&p.risks.length){
+    html += `<div class="card-label" style="margin:0.75rem 0 0.5rem">Risks & blockers flagged</div>`;
+    html += p.risks.map((r,i)=>`
+      <div style="display:flex;gap:10px;align-items:flex-start;padding:0.5rem 0;border-bottom:1px solid var(--border)">
+        <input type="checkbox" id="tr-r-${i}" checked style="margin-top:3px;width:auto;flex-shrink:0">
+        <span style="font-size:13px;color:var(--ink)">${r.text}</span>
+      </div>`).join('');
+  }
+  if(p.ideas&&p.ideas.length){
+    html += `<div class="card-label" style="margin:0.75rem 0 0.5rem">Ideas surfaced</div>`;
+    html += p.ideas.map((id,i)=>`
+      <div style="display:flex;gap:10px;align-items:flex-start;padding:0.5rem 0;border-bottom:1px solid var(--border)">
+        <input type="checkbox" id="tr-i-${i}" checked style="margin-top:3px;width:auto;flex-shrink:0">
+        <span style="font-size:13px;color:var(--ink)">${id.text}</span>
+      </div>`).join('');
+  }
+  el.innerHTML = html;
+}
+
+function saveTranscriptItems() {
+  const p = transcriptItems;
+  if(!p) return;
+  const wsId = document.getElementById('transcript-ws').value;
+  const ws = S.workstreams.find(w=>w.id==wsId);
+  const wsName = ws?ws.name:'';
+  const t = today();
+
+  // Save checked tasks
+  (p.tasks||[]).forEach((task,i)=>{
+    const cb = document.getElementById(`tr-t-${i}`);
+    if(cb&&cb.checked){
+      S.tasks.push({
+        id:Date.now()+Math.random(), name:task.text,
+        wsId:wsId||'', wsName,
+        source:'Meeting action',
+        priority:task.priority||'Medium',
+        due:'', done:false, doneDate:null, created:t
+      });
+    }
+  });
+
+  // Save checked decisions as notes
+  (p.decisions||[]).forEach((d,i)=>{
+    const cb = document.getElementById(`tr-d-${i}`);
+    if(cb&&cb.checked){
+      S.notes.push({id:Date.now()+Math.random(),text:d.text,wsName,type:'Decision made',date:t,time:new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})});
+    }
+  });
+
+  // Save risks
+  (p.risks||[]).forEach((r,i)=>{
+    const cb = document.getElementById(`tr-r-${i}`);
+    if(cb&&cb.checked){
+      S.notes.push({id:Date.now()+Math.random(),text:r.text,wsName,type:'Blocker / risk',date:t,time:new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})});
+    }
+  });
+
+  // Save ideas
+  (p.ideas||[]).forEach((id2,i)=>{
+    const cb = document.getElementById(`tr-i-${i}`);
+    if(cb&&cb.checked){
+      S.notes.push({id:Date.now()+Math.random(),text:id2.text,wsName,type:'Idea / opportunity',date:t,time:new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})});
+    }
+  });
+
+  // Save summary as meeting note
+  if(p.summary){
+    S.notes.push({id:Date.now()+Math.random(),text:`Call summary: ${p.summary}`,wsName,type:'Meeting note',date:t,time:new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})});
+  }
+
+  save(); renderTasks(); renderNotes(); updateMetrics();
+  document.getElementById('transcript-results').classList.remove('open');
+  document.getElementById('transcript-input').value='';
+  transcriptItems = [];
+  alert(`Saved. Check your Tasks and Notes tabs.`);
+}
+
+init();
+</script>
+</body>
+</html>
