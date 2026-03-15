@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Seven OS — Strategic Command Centre</title>
+<title>Strategist — Personal Development OS</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:-apple-system,'Helvetica Neue',sans-serif;background:#f8f7f4;color:#1a1a1a;min-height:100vh}
@@ -167,7 +167,7 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
 <!-- SIDEBAR -->
 <div class="sidebar">
   <div class="sidebar-top">
-    <div class="sidebar-logo">Seven OS<span>Strategy Command Centre</span></div>
+    <div class="sidebar-logo">Strategist<span>Personal Development OS</span></div>
   </div>
   <nav class="sidebar-nav">
     <div class="nav-item active" onclick="tab('daily',this)">
@@ -200,7 +200,7 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
     </div>
   </nav>
   <div class="sidebar-footer">
-    <div class="sidebar-meta">Ethan Rand · Angstrom Sports</div>
+    <div class="sidebar-meta">Ethan Rand · Strategist</div>
     <div class="sidebar-meta" style="margin-top:2px" id="sb-date"></div>
   </div>
 </div>
@@ -303,7 +303,17 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
           <button class="btn btn-ghost" onclick="toggleForm('ws-parse-form')">Cancel</button>
         </div>
       </div>
-      <div id="ws-parse-loading" style="display:none;font-size:13px;color:var(--ink-3);padding:0.5rem 0">Parsing message...</div>
+      <div id="ws-parse-pasteback" style="display:none;margin-bottom:0.75rem">
+        <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:0.875rem;margin-bottom:0.75rem">
+          <p style="font-size:13px;font-weight:500;color:#1d4ed8;margin-bottom:4px">Claude has generated the JSON in chat →</p>
+          <p style="font-size:13px;color:#1e40af;line-height:1.5">Copy the JSON response from Claude chat and paste it below, then click Apply.</p>
+        </div>
+        <textarea id="ws-json-paste" placeholder='Paste Claude\'s JSON response here e.g. {"name":"...","area":"...","desc":"..."}' style="min-height:80px;margin-bottom:0.75rem;font-family:monospace;font-size:12px"></textarea>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-dark" onclick="applyParsedJson()">Apply to form →</button>
+          <button class="btn btn-ghost" onclick="document.getElementById('ws-parse-pasteback').style.display='none';document.getElementById('ws-parse-btn-row').style.display='flex'">Back</button>
+        </div>
+      </div>
       <div style="display:flex;gap:8px" id="ws-parse-btn-row">
         <button class="btn btn-dark" onclick="parseMessage()">Extract workstream →</button>
         <button class="btn btn-ghost" onclick="toggleForm('ws-parse-form')">Cancel</button>
@@ -400,7 +410,18 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
         <p style="font-size:13px;color:var(--ink-2);margin-bottom:0.875rem;line-height:1.6">Paste any transcript — Teams call, Zoom, voice note summary. The AI pulls out actions, decisions, and tasks and adds them directly to your log and task list.</p>
         <textarea id="transcript-input" placeholder="Paste transcript here... Teams auto-transcription, Zoom notes, or even rough notes from a call." style="min-height:90px;margin-bottom:0.75rem"></textarea>
         <select id="transcript-ws" style="margin-bottom:0.75rem"><option value="">Link to a workstream (optional)...</option></select>
-        <div id="transcript-loading" style="display:none;font-size:13px;color:var(--ink-3);margin-bottom:0.5rem">Analysing transcript...</div>
+        <div id="transcript-loading" style="display:none;font-size:13px;color:var(--ink-3);margin-bottom:0.5rem">Sending to Claude...</div>
+        <div id="transcript-pasteback" style="display:none;margin-top:0.75rem">
+          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:0.875rem;margin-bottom:0.75rem">
+            <p style="font-size:13px;font-weight:500;color:#1d4ed8;margin-bottom:4px">Claude is generating the extraction in chat →</p>
+            <p style="font-size:13px;color:#1e40af;line-height:1.5">Copy the JSON from Claude's response and paste below, then click Apply.</p>
+          </div>
+          <textarea id="transcript-json-paste" placeholder='Paste Claude\'s JSON response here...' style="min-height:70px;font-family:monospace;font-size:12px;margin-bottom:0.75rem"></textarea>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-dark" onclick="applyTranscriptJson()">Apply →</button>
+            <button class="btn btn-ghost" onclick="document.getElementById('transcript-pasteback').style.display='none'">Cancel</button>
+          </div>
+        </div>
         <button class="btn btn-dark" onclick="parseTranscript()">Extract actions & decisions →</button>
       </div>
     </div>
@@ -565,10 +586,54 @@ hr{border:none;border-top:1px solid var(--border);margin:1rem 0}
 </div><!-- /app -->
 
 <script>
+// ── Backend ────────────────────────────────────────────
+const BACKEND = 'https://strategist-backend.onrender.com';
+
+async function callBackendAI(body) {
+  try {
+    const res = await fetch(`${BACKEND}/api/chat`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    return data.content?.filter(b => b.type === 'text').map(b => b.text).join('') || '';
+  } catch(e) {
+    console.error('Backend AI error:', e);
+    return null;
+  }
+}
+
+async function syncToBackend() {
+  try {
+    await fetch(`${BACKEND}/api/sync`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(S)
+    });
+  } catch(e) {
+    console.error('Sync error:', e);
+  }
+}
+
+async function triggerMorningBriefing() {
+  try {
+    const res = await fetch(`${BACKEND}/api/send-briefing`, { method: 'POST' });
+    const data = await res.json();
+    return data.ok;
+  } catch(e) { return false; }
+}
+
+async function triggerWeeklyReport() {
+  try {
+    const res = await fetch(`${BACKEND}/api/send-report`, { method: 'POST' });
+    const data = await res.json();
+    return data.ok;
+  } catch(e) { return false; }
+}
+
 // ── State ──────────────────────────────────────────────
 let S = { workstreams:[], tasks:[], notes:[] };
-
-const QUESTIONS = [
   "Super 6 has roughly 1 million weekly active users. If Seven is to overtake it in 3 years, what needs to be true about your product, distribution, and prize structure? Work backwards from the number.",
   "Entain operates across 30+ markets and brands. How would you make the internal case that Seven should be the FTP platform for all of them — not just Ladbrokes UK?",
   "A Director of Strategy always asks: what does success actually look like in 12 months? Write down 3 metrics that would tell you Seven is on track, and what's your current baseline for each?",
@@ -593,13 +658,14 @@ async function init() {
 
 async function loadData() {
   try {
-    const r = await window.storage.get('seven-os-v2');
+    const r = await window.storage.get('strategist-v1');
     if (r && r.value) S = JSON.parse(r.value);
   } catch(e) {}
 }
 
 async function save() {
-  try { await window.storage.set('seven-os-v2', JSON.stringify(S)); } catch(e) {}
+  try { await window.storage.set('strategist-v1', JSON.stringify(S)); } catch(e) {}
+  syncToBackend();
 }
 
 function setDate() {
@@ -898,7 +964,7 @@ function genWeeklyReport() {
 
 function sendWeeklyReport() {
   const preview = document.getElementById('report-preview').textContent;
-  sendPrompt(`Please send the following email via Gmail to Ethan.Rand@EntainGroup.com. This is my weekly report for my own review before sending to managers. Subject: "Seven OS — Weekly Report". Body: ${preview} ↗`);
+  sendPrompt(`Please send the following email via Gmail to Ethan.Rand@EntainGroup.com. This is my weekly report for my own review before sending to managers. Subject: "Strategist — Weekly Report". Body: ${preview} ↗`);
 }
 
 // ── Strategic Coach ────────────────────────────────────
@@ -970,87 +1036,46 @@ function fallbackCopy(text) {
 }
 
 async function generateMorningBriefing() {
-  const t = today();
-  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate()+1);
-  const tomorrowStr = tomorrow.toISOString().slice(0,10);
-  const overdueTasks = S.tasks.filter(x=>x.due&&x.due<t&&!x.done).map(x=>x.name).join(', ')||'None';
-  const todayTasks = S.tasks.filter(x=>x.due===t&&!x.done).map(x=>`[${x.priority}] ${x.name}`).join('\n')||'No tasks scheduled for today';
-  const q = document.getElementById('day-q').textContent;
-
   document.getElementById('briefing-loading').style.display='block';
   document.getElementById('briefing-btn').disabled=true;
-
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:600,
-        messages:[{role:'user',content:`Write a sharp morning briefing email for Ethan Rand, Strategy Analyst at Angstrom Sports. He is building Seven — a free-to-play football game linked to Ladbrokes, goal to beat Super 6. Write ONLY the email body (no subject line), plain text, using these exact sections with emoji headers:
-
-📋 TODAY'S PRIORITIES
-Tasks: ${todayTasks}
-Frame the top 1-2 tasks strategically — what matters most and the Director-level angle on each.
-
-⚠️ OVERDUE
-${overdueTasks === 'None' ? 'Nothing overdue. Clean slate.' : 'Flag these: ' + overdueTasks}
-
-🔄 WORKSTREAM PULSE
-${getWsSummary() === 'No active workstreams.' ? 'No active workstreams yet — add them to the Workstreams tab.' : getWsSummary()}
-One punchy sentence per workstream on what to move today.
-
-🧠 DIRECTOR QUESTION
-${q}
-
-💡 PROACTIVE IDEA
-Based on the workstreams, one high-impact thing Ethan could do today that he hasn't been asked for.
-
-Keep total under 280 words. Confident, direct tone — like a smart colleague briefing you, not a corporate bot.`}]
-      })
-    });
-    const data = await res.json();
-    briefingContent = data.content.filter(b=>b.type==='text').map(b=>b.text).join('').trim();
-    document.getElementById('briefing-preview').textContent = briefingContent;
-    document.getElementById('briefing-preview-wrap').style.display='block';
-  } catch(e) {
-    // Fallback briefing if API fails
-    briefingContent = `Good morning, Ethan.\n\n📋 TODAY'S PRIORITIES\n${todayTasks}\n\n⚠️ OVERDUE\n${overdueTasks}\n\n🔄 WORKSTREAM PULSE\n${getWsSummary()}\n\n🧠 DIRECTOR QUESTION\n${q}\n\n💡 PROACTIVE IDEA\nBuild a one-page competitive teardown of Super 6 — not features, but why people play it and where Seven wins. Self-initiated work like this gets noticed.`;
-    document.getElementById('briefing-preview').textContent = briefingContent;
-    document.getElementById('briefing-preview-wrap').style.display='block';
-  }
+  document.getElementById('briefing-preview-wrap').style.display='none';
+  await syncToBackend();
+  const ok = await triggerMorningBriefing();
   document.getElementById('briefing-loading').style.display='none';
   document.getElementById('briefing-btn').disabled=false;
+  document.getElementById('briefing-preview-wrap').style.display='block';
+  briefingContent = ok
+    ? `Sent to Ethan.Rand@EntainGroup.com — check your inbox.\n\nGenerated from your live workstreams and tasks.\n\nBelief costs nothing.`
+    : `Could not reach the backend. Try again in a moment.`;
+  document.getElementById('briefing-preview').textContent = briefingContent;
 }
 
 function openBriefingInOutlook() {
   const t = today();
-  openInOutlook(`Seven OS — Morning Briefing · ${t}`, briefingContent);
+  openInOutlook(`Strategist — Morning Briefing · ${t}`, briefingContent);
 }
 
 function copyBriefing() { copyToClipboard(briefingContent); }
 
 // ── Weekly report Outlook ──────────────────────────────
-function genWeeklyReport() {
-  const extra = document.getElementById('report-extra').value.trim();
-  const weekNotes = S.notes.filter(n=>n.date>=weekStart());
-  const noteSummary = weekNotes.length ? weekNotes.map(n=>`[${n.type}${n.wsName?' — '+n.wsName:''}]: ${n.text}`).join('\n') : 'No notes logged this week.';
-  const tasksDone = getCompletedTasks();
-
-  sendPrompt(`Write a polished weekly status report email body (no subject) for Ethan Rand — Strategy Analyst at Angstrom Sports — to send to Ross Jarvis (Director of Strategy) and Ben Porter (Strategy Manager). Context: Seven is a free-to-play football game linked to Ladbrokes, goal is to beat Super 6. Active workstreams: ${getWsSummary()}. Notes this week: ${noteSummary}. Completed tasks: ${tasksDone}. ${extra?'Extra context: '+extra:''} Structure: Opening headline sentence / Workstream updates (impact-led, not activity-led) / Decisions made / Risks or blockers + recommended action / Next week priorities / What I need from Ross and Ben. Tone: confident, senior-readership-ready, 90-second skim. After generating, the user will copy or open in Outlook. ↗`);
-
-  // Show the Outlook buttons after a delay
-  setTimeout(()=>{
-    document.getElementById('send-report-btn').style.display='inline-flex';
-    document.getElementById('copy-report-btn').style.display='inline-flex';
-  }, 2000);
+async function genWeeklyReport() {
+  const btn = document.getElementById('send-report-btn');
+  if(btn) btn.textContent = 'Sending...';
+  await syncToBackend();
+  const ok = await triggerWeeklyReport();
+  document.getElementById('report-preview').style.display='block';
+  document.getElementById('report-preview').textContent = ok
+    ? `Weekly report draft sent to Ethan.Rand@EntainGroup.com — check your inbox.\n\nReview it, adjust anything, then forward to Ross and Ben.\n\nBelief costs nothing.`
+    : `Could not reach the backend. Try again in a moment.`;
+  if(btn){ btn.style.display='none'; }
+  document.getElementById('copy-report-btn').style.display='none';
 }
 
 function openReportInOutlook() {
   const preview = document.getElementById('report-preview');
   const content = preview ? preview.textContent : 'See weekly report generated in chat above.';
   const d = new Date(); const weekLabel = `w/c ${weekStart()}`;
-  openInOutlook(`Seven OS — Weekly Update · ${weekLabel}`, content || 'See weekly report generated above — copy into this email.');
+  openInOutlook(`Strategist — Weekly Update · ${weekLabel}`, content || 'See weekly report generated above — copy into this email.');
 }
 
 function copyReport() {
@@ -1077,32 +1102,58 @@ async function parseMessage() {
   const source = document.getElementById('parse-source').value;
   document.getElementById('ws-parse-loading').style.display='block';
   document.getElementById('ws-parse-btn-row').style.display='none';
+  document.getElementById('ws-parse-pasteback').style.display='none';
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1000,
-        messages:[{role:'user',content:`You are helping Ethan Rand, a Strategy Analyst at Angstrom Sports working on Seven (free-to-play football game linked to Ladbrokes, goal to beat Super 6). He received this message from ${source}: """${msg}""" Extract a workstream from this message. Respond ONLY with valid JSON, no markdown, no backticks: {"name":"short workstream name","area":"one of: Product strategy / Commercial / Growth & acquisition / Data & analytics / Partnerships / Roadmap planning / Comms & reporting / Operations / Self-initiated","status":"In progress","desc":"2-3 sentence description of what the workstream is, what the goal is, and what Ethan needs to do","owner":"who sent this or who else is involved","tasks":"comma-separated list of immediate concrete tasks extracted from the message"}`}]
-      })
+    const text = await callBackendAI({
+      model:'claude-sonnet-4-20250514', max_tokens:800,
+      messages:[{role:'user',content:`You are helping Ethan Rand, Strategy Analyst at Angstrom Sports (Seven project). He received this message from ${source}: """${msg}""" Extract a workstream. Respond ONLY with valid JSON, no markdown: {"name":"short name","area":"Product strategy or Commercial or Growth & acquisition or Data & analytics or Partnerships or Roadmap planning or Comms & reporting or Operations or Self-initiated","status":"In progress","desc":"2-3 sentences on what this is and what Ethan needs to do","owner":"who is involved","tasks":"comma-separated immediate actions"}`}]
     });
-    const data = await res.json();
-    const text = data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
-    const clean = text.replace(/```json|```/g,'').trim();
-    const parsed = JSON.parse(clean);
-    document.getElementById('wsp-name').value = parsed.name||'';
-    document.getElementById('wsp-area').value = parsed.area||'';
-    document.getElementById('wsp-status').value = parsed.status||'In progress';
-    document.getElementById('wsp-desc').value = parsed.desc||'';
-    document.getElementById('wsp-owner').value = parsed.owner||source;
-    document.getElementById('wsp-tasks').value = parsed.tasks||'';
-    document.getElementById('ws-parse-preview').style.display='block';
+    if(text) {
+      const parsed = JSON.parse(text.replace(/```json|```/g,'').trim());
+      document.getElementById('wsp-name').value = parsed.name||'';
+      document.getElementById('wsp-area').value = parsed.area||'';
+      document.getElementById('wsp-status').value = 'In progress';
+      document.getElementById('wsp-desc').value = parsed.desc||'';
+      document.getElementById('wsp-owner').value = parsed.owner||source;
+      document.getElementById('wsp-tasks').value = parsed.tasks||'';
+      document.getElementById('ws-parse-preview').style.display='block';
+    } else {
+      throw new Error('No response');
+    }
   } catch(e) {
-    alert('Could not parse message. Try again or add manually.');
+    document.getElementById('ws-parse-pasteback').style.display='block';
+    sendPrompt(`Extract a workstream from this message from ${source}: """${msg}""" Respond ONLY with JSON: {"name":"...","area":"Product strategy / Commercial / Growth & acquisition / Data & analytics / Partnerships / Roadmap planning / Comms & reporting / Operations / Self-initiated","status":"In progress","desc":"2-3 sentences","owner":"...","tasks":"comma-separated tasks"} ↗`);
   }
   document.getElementById('ws-parse-loading').style.display='none';
   document.getElementById('ws-parse-btn-row').style.display='flex';
+}
+
+// ── Parse transcript ───────────────────────────────────
+let transcriptItems = [];
+
+async function parseTranscript() {
+  const text = document.getElementById('transcript-input').value.trim();
+  if(!text){alert('Paste a transcript first.');return;}
+  const wsId = document.getElementById('transcript-ws').value;
+  const ws = S.workstreams.find(w=>w.id==wsId);
+  document.getElementById('transcript-loading').style.display='block';
+  document.getElementById('transcript-pasteback').style.display='none';
+  try {
+    const result = await callBackendAI({
+      model:'claude-sonnet-4-20250514', max_tokens:1200,
+      messages:[{role:'user',content:`Analyse this transcript from Ethan Rand at Angstrom Sports (Seven project).${ws?' Workstream: '+ws.name+'.':''} Transcript: """${text}""" Respond ONLY with valid JSON, no markdown: {"summary":"2 sentences","decisions":[{"text":"..."}],"tasks":[{"text":"...","owner":"Ethan or name","priority":"High or Medium or Low"}],"risks":[{"text":"..."}],"ideas":[{"text":"..."}]}`}]
+    });
+    if(result) {
+      const parsed = JSON.parse(result.replace(/```json|```/g,'').trim());
+      transcriptItems = parsed;
+      renderTranscriptResults(parsed, ws?ws.name:'');
+      document.getElementById('transcript-results').classList.add('open');
+    } else { throw new Error('No response'); }
+  } catch(e) {
+    document.getElementById('transcript-pasteback').style.display='block';
+    sendPrompt(`Analyse this transcript and extract tasks, decisions, risks and ideas. Respond ONLY with JSON: {"summary":"2 sentences","decisions":[{"text":"..."}],"tasks":[{"text":"...","owner":"Ethan or name","priority":"High or Medium or Low"}],"risks":[{"text":"..."}],"ideas":[{"text":"..."}]} Transcript: """${text}""" ↗`);
+  }
+  document.getElementById('transcript-loading').style.display='none';
 }
 
 function saveParseWs() {
@@ -1136,36 +1187,57 @@ function saveParseWs() {
   document.getElementById('ws-parse-preview').style.display='none';
 }
 
+function applyParsedJson() {
+  const raw = document.getElementById('ws-json-paste').value.trim();
+  try {
+    const clean = raw.replace(/```json|```/g,'').trim();
+    const parsed = JSON.parse(clean);
+    document.getElementById('wsp-name').value = parsed.name||'';
+    document.getElementById('wsp-area').value = parsed.area||'';
+    document.getElementById('wsp-status').value = parsed.status||'In progress';
+    document.getElementById('wsp-desc').value = parsed.desc||'';
+    document.getElementById('wsp-owner').value = parsed.owner||'';
+    document.getElementById('wsp-tasks').value = parsed.tasks||'';
+    document.getElementById('ws-parse-pasteback').style.display='none';
+    document.getElementById('ws-parse-preview').style.display='block';
+    document.getElementById('ws-json-paste').value='';
+  } catch(e) {
+    alert('Could not read the JSON. Make sure you copied Claude\'s full response including the curly braces {}.');
+  }
+}
+
 // ── Parse transcript ───────────────────────────────────
 let transcriptItems = [];
 
-async function parseTranscript() {
+function parseTranscript() {
   const text = document.getElementById('transcript-input').value.trim();
   if(!text){alert('Paste a transcript first.');return;}
   const wsId = document.getElementById('transcript-ws').value;
   const ws = S.workstreams.find(w=>w.id==wsId);
-  document.getElementById('transcript-loading').style.display='block';
+
+  // Send to Claude chat
+  sendPrompt(`Analyse this meeting or call transcript and extract everything actionable.${ws?' This relates to workstream: '+ws.name+'.':''} Transcript: """${text}""" Respond ONLY with a valid JSON object, no markdown, no backticks: {"summary":"2 sentence summary of the call","decisions":[{"text":"decision made"}],"tasks":[{"text":"action item","owner":"Ethan or someone else","priority":"High or Medium or Low"}],"risks":[{"text":"risk or blocker mentioned"}],"ideas":[{"text":"idea or opportunity surfaced"}]}`);
+
+  // Show paste-back panel
+  document.getElementById('transcript-pasteback').style.display='block';
+  document.getElementById('transcript-loading').style.display='none';
+}
+
+function applyTranscriptJson() {
+  const raw = document.getElementById('transcript-json-paste').value.trim();
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1200,
-        messages:[{role:'user',content:`You are helping Ethan Rand, a Strategy Analyst at Angstrom Sports working on Seven (free-to-play football game, goal to beat Super 6). Analyse this call or meeting transcript and extract everything actionable. ${ws?'This relates to workstream: '+ws.name+'.':''} Transcript: """${text}""" Respond ONLY with valid JSON, no markdown, no backticks: {"summary":"2 sentence summary of the call","decisions":[{"text":"decision made"}],"tasks":[{"text":"action item","owner":"who owns it — Ethan or someone else","priority":"High or Medium or Low"}],"risks":[{"text":"risk or blocker mentioned"}],"ideas":[{"text":"idea or opportunity surfaced"}]}`}]
-      })
-    });
-    const data = await res.json();
-    const raw = data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
     const clean = raw.replace(/```json|```/g,'').trim();
     const parsed = JSON.parse(clean);
+    const wsId = document.getElementById('transcript-ws').value;
+    const ws = S.workstreams.find(w=>w.id==wsId);
     transcriptItems = parsed;
     renderTranscriptResults(parsed, ws?ws.name:'');
     document.getElementById('transcript-results').classList.add('open');
+    document.getElementById('transcript-pasteback').style.display='none';
+    document.getElementById('transcript-json-paste').value='';
   } catch(e) {
-    alert('Could not parse transcript. Try again.');
+    alert('Could not read the JSON. Copy Claude\'s full response including the curly braces {}.');
   }
-  document.getElementById('transcript-loading').style.display='none';
 }
 
 function renderTranscriptResults(p, wsName) {
