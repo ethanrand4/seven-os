@@ -233,7 +233,9 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
     <div class="card" style="margin-bottom:0">
       <div class="card-label">Proactive idea generator</div>
       <p style="font-size:13px;color:var(--ink2);margin-bottom:0.875rem;line-height:1.6">Self-generated work that goes beyond your assigned tasks. The habit that gets you to Director of Strategy level.</p>
-      <button class="btn btn-dark" onclick="runProactiveIdeas()">Generate ideas →</button>
+      <button class="btn btn-dark" id="proactive-daily-btn" onclick="runProactiveDaily()">Generate ideas →</button>
+      <div class="loading" id="proactive-daily-loading">Generating ideas from your workstreams...</div>
+      <div class="ai-out" id="proactive-daily-result" style="display:none"></div>
     </div>
   </div>
 </div>
@@ -399,35 +401,41 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
     <p style="font-size:13px;color:var(--ink2);margin-bottom:0.875rem;line-height:1.6">Drop in a task, a brief, a problem. The coach builds the strategic scaffold — so you stop staring at a blank page and start executing with confidence.</p>
     <textarea id="coach-input" placeholder="e.g. 'Decide the Axium AI roadmap beyond launch — what capabilities to prioritise and why'&#10;&#10;or&#10;&#10;'How do I build and present the post-launch roadmap for season one?'" style="min-height:100px"></textarea>
     <div class="brow">
-      <button class="btn btn-dark" onclick="runCoach()">How would a Director approach this? →</button>
-      <button class="btn" onclick="runStructure()">Build me a structure →</button>
-      <button class="btn" onclick="runQuestions()">What are the key questions? →</button>
+      <button class="btn btn-dark" id="coach-btn" onclick="runCoach()">How would a Director approach this? →</button>
+      <button class="btn" id="structure-btn" onclick="runStructure()">Build me a structure →</button>
+      <button class="btn" id="questions-btn" onclick="runQuestions()">What are the key questions? →</button>
     </div>
+    <div class="loading" id="coach-loading">Thinking like a Director of Strategy...</div>
+    <div class="ai-out" id="coach-result" style="display:none"></div>
   </div>
 
   <div class="card">
     <div class="card-title">Proactive ideas — what else should I be doing?</div>
     <p style="font-size:13px;color:var(--ink2);margin-bottom:0.875rem;line-height:1.6">Based on your active workstreams, generates high-impact work you haven't been asked for but should be doing. This is what separates an analyst from a Director.</p>
-    <button class="btn btn-dark" onclick="runProactiveIdeas()">Generate proactive work ideas →</button>
+    <button class="btn btn-dark" id="proactive-btn" onclick="runProactiveIdeas()">Generate proactive work ideas →</button>
+    <div class="loading" id="proactive-loading">Generating ideas from your workstreams...</div>
+    <div class="ai-out" id="proactive-result" style="display:none"></div>
   </div>
 
   <div class="card">
     <div class="card-label">Director-level frameworks</div>
     <p style="font-size:13px;color:var(--ink2);margin-bottom:0.875rem;line-height:1.6">Build your strategic thinking toolkit — applied specifically to Seven and the OSB market.</p>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <button class="intel-btn" onclick="sendPrompt('Teach me the MECE principle applied to strategy work. Give me a concrete example from the FTP gaming world — specifically how to structure a product roadmap recommendation for Seven. Then give me a checklist I can use for any output at work. ↗')">
+      <button class="intel-btn" onclick="runFramework('mece')">
         <div><div class="intel-title">MECE thinking</div><div class="intel-sub">Mutually exclusive, collectively exhaustive</div></div><div class="intel-arrow">→</div>
       </button>
-      <button class="intel-btn" onclick="sendPrompt('Teach me the Pyramid Principle — how Directors structure recommendations. Show me how to apply this to writing a recommendation about the Axium AI roadmap for Seven. Give me a template I can follow immediately. ↗')">
+      <button class="intel-btn" onclick="runFramework('pyramid')">
         <div><div class="intel-title">Pyramid principle</div><div class="intel-sub">How Directors structure recommendations</div></div><div class="intel-arrow">→</div>
       </button>
-      <button class="intel-btn" onclick="sendPrompt('Explain how to write a proper strategic recommendation — not a wish list, but a full proposal with situation, recommendation, rationale, defence, and asks. Use the Seven post-launch roadmap as the example. Ross Jarvis (Director of Strategy) wants Ethan to own the full argument, not just list options. ↗')">
+      <button class="intel-btn" onclick="runFramework('proposal')">
         <div><div class="intel-title">Making proposals, not wish lists</div><div class="intel-sub">The shift Ross wants from Ethan</div></div><div class="intel-arrow">→</div>
       </button>
-      <button class="intel-btn" onclick="sendPrompt('Explain how to build a strategic narrative — specifically how to tell the story of a product roadmap to get buy-in from senior stakeholders. Use the Seven season one roadmap (August 2026 to May 2027) as the example. What is the story structure? How do you make it feel inevitable? ↗')">
+      <button class="intel-btn" onclick="runFramework('narrative')">
         <div><div class="intel-title">Strategic narrative</div><div class="intel-sub">Getting senior buy-in at Entain level</div></div><div class="intel-arrow">→</div>
       </button>
     </div>
+    <div class="loading" id="framework-loading">Loading framework...</div>
+    <div class="ai-out" id="framework-result" style="display:none"></div>
   </div>
 </div>
 
@@ -439,14 +447,19 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
     <div class="card" style="margin-bottom:0">
       <div class="card-label">Daily Teams update</div>
       <p style="font-size:13px;color:var(--ink2);margin-bottom:0.875rem;line-height:1.6">A short confident paragraph for Ross and Ben. Send it by 4:30pm every day. Ross wants constant communication — this makes it effortless.</p>
-      <button class="btn btn-dark" onclick="genTeamsUpdate()">Generate today's update →</button>
-      <p style="font-size:11px;color:var(--ink3);margin-top:0.5rem">Generates in Claude chat — copy and paste into Teams.</p>
+      <button class="btn btn-dark" id="teams-btn" onclick="genTeamsUpdate()">Generate today's update →</button>
+      <div class="loading" id="teams-loading">Generating Teams update...</div>
+      <div class="ai-out" id="teams-result" style="display:none"></div>
+      <button class="btn btn-sm" id="teams-copy" style="display:none;margin-top:0.5rem" onclick="copyResult('teams-result')">Copy to clipboard</button>
     </div>
     <div class="card" style="margin-bottom:0">
       <div class="card-label">Workstream update</div>
       <p style="font-size:13px;color:var(--ink2);margin-bottom:0.875rem;line-height:1.6">Quick update on a specific workstream — for when something progresses or you need to flag something to Ross or Ben.</p>
       <select id="comms-ws" style="margin-bottom:0.75rem"><option value="">Select workstream...</option></select>
-      <button class="btn" onclick="genWsUpdate()">Generate update →</button>
+      <button class="btn" id="ws-update-btn" onclick="genWsUpdate()">Generate update →</button>
+      <div class="loading" id="ws-update-loading">Generating workstream update...</div>
+      <div class="ai-out" id="ws-update-result" style="display:none"></div>
+      <button class="btn btn-sm" id="ws-update-copy" style="display:none;margin-top:0.5rem" onclick="copyResult('ws-update-result')">Copy to clipboard</button>
     </div>
   </div>
 
@@ -485,40 +498,28 @@ textarea{resize:vertical;min-height:80px;line-height:1.6}
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
     <div class="card">
       <div class="card-label">Seven & FTP market</div>
-      <button class="intel-btn" onclick="sendPrompt('Search for the latest news, product updates, and strategy around Super 6 by Sky Bet in the last 3 months. What are they doing — product changes, prize structure, marketing, user numbers? Then tell me: what does this mean strategically for Seven? Where are the gaps we can exploit? ↗')">
-        <div><div class="intel-title">Super 6 — what are they doing?</div><div class="intel-sub">Latest product & strategy moves</div></div><div class="intel-arrow">→</div>
-      </button>
-      <button class="intel-btn" onclick="sendPrompt('Search for the latest trends in free-to-play gaming in UK sports betting in 2025-2026. What are major operators investing in? What engagement mechanics are working? What should Seven be paying attention to before August launch? ↗')">
-        <div><div class="intel-title">UK FTP gaming trends</div><div class="intel-sub">What operators are building right now</div></div><div class="intel-arrow">→</div>
-      </button>
-      <button class="intel-btn" onclick="sendPrompt('Search for examples of successful FTP sports game launches — how did they acquire users, build habits, and drive engagement past the first 4 weeks? What can Seven learn for its August 2026 launch? Include examples from betting, fantasy, and gaming. ↗')">
-        <div><div class="intel-title">Successful FTP launch benchmarks</div><div class="intel-sub">What great launch execution looks like</div></div><div class="intel-arrow">→</div>
-      </button>
-      <button class="intel-btn" onclick="sendPrompt('Search for gamification examples in sports apps — badges, streaks, progression systems, social features, animations. What works and why? Give me 4-5 concrete examples with any engagement data available. Which mechanics should Seven consider for its post-launch roadmap (August 2026 to May 2027)? ↗')">
-        <div><div class="intel-title">Gamification benchmarks</div><div class="intel-sub">Badges, streaks, progression — what works</div></div><div class="intel-arrow">→</div>
-      </button>
+      <button class="intel-btn" onclick="runIntelTopic('super6')"><div><div class="intel-title">Super 6 — what are they doing?</div><div class="intel-sub">Latest product & strategy moves</div></div><div class="intel-arrow">→</div></button>
+      <button class="intel-btn" onclick="runIntelTopic('ftp')"><div><div class="intel-title">UK FTP gaming trends</div><div class="intel-sub">What operators are building right now</div></div><div class="intel-arrow">→</div></button>
+      <button class="intel-btn" onclick="runIntelTopic('launch')"><div><div class="intel-title">Successful FTP launch benchmarks</div><div class="intel-sub">What great launch execution looks like</div></div><div class="intel-arrow">→</div></button>
+      <button class="intel-btn" onclick="runIntelTopic('gamification')"><div><div class="intel-title">Gamification benchmarks</div><div class="intel-sub">Badges, streaks, progression — what works</div></div><div class="intel-arrow">→</div></button>
     </div>
     <div class="card">
       <div class="card-label">Entain & broader market</div>
-      <button class="intel-btn" onclick="sendPrompt('Search for the latest Entain company news and strategy updates from the last 3 months. What are the group priorities? Any announcements about free-to-play, product innovation, or UK market strategy? What should Ethan Rand as a strategy analyst at Angstrom Sports (an Entain company building Seven) be aware of? ↗')">
-        <div><div class="intel-title">Entain & BetMGM latest</div><div class="intel-sub">Group strategy & priorities</div></div><div class="intel-arrow">→</div>
-      </button>
-      <button class="intel-btn" onclick="sendPrompt('Search for the latest AI usage in sports apps in 2025-2026 — player performance insights, prediction tools, personalisation, fan engagement. What are Stats Perform, Opta, Genius Sports doing? What are FPL, Sorare, DraftKings building with AI? What is the state of sports AI right now and what does it mean for Seven\'s Axium AI partnership? ↗')">
-        <div><div class="intel-title">AI in sports apps — 2026</div><div class="intel-sub">What competitors are building with AI</div></div><div class="intel-arrow">→</div>
-      </button>
-      <button class="intel-btn" onclick="sendPrompt('Search for the latest UK online sports betting regulatory news — anything affecting free-to-play games, jackpot promotions, cross-sell mechanics between FTP and real-money betting. What are the regulatory risks and constraints for Seven, linked to Ladbrokes, launching in August 2026? ↗')">
-        <div><div class="intel-title">UK gambling regulation</div><div class="intel-sub">Risks & constraints for Seven</div></div><div class="intel-arrow">→</div>
-      </button>
-      <button class="intel-btn" onclick="sendPrompt('Search for examples of cross-sell and acquisition mechanics between free-to-play games and real-money gambling products. What conversion rates are considered good? What best practices exist? How does the Sky Bet / Super 6 model perform? What lessons apply to Seven\'s x-sell into Ladbrokes? ↗')">
-        <div><div class="intel-title">FTP → real money cross-sell</div><div class="intel-sub">Conversion benchmarks & best practice</div></div><div class="intel-arrow">→</div>
-      </button>
+      <button class="intel-btn" onclick="runIntelTopic('entain')"><div><div class="intel-title">Entain & BetMGM latest</div><div class="intel-sub">Group strategy & priorities</div></div><div class="intel-arrow">→</div></button>
+      <button class="intel-btn" onclick="runIntelTopic('ai')"><div><div class="intel-title">AI in sports apps — 2026</div><div class="intel-sub">What competitors are building with AI</div></div><div class="intel-arrow">→</div></button>
+      <button class="intel-btn" onclick="runIntelTopic('regulation')"><div><div class="intel-title">UK gambling regulation</div><div class="intel-sub">Risks & constraints for Seven</div></div><div class="intel-arrow">→</div></button>
+      <button class="intel-btn" onclick="runIntelTopic('crosssell')"><div><div class="intel-title">FTP → real money cross-sell</div><div class="intel-sub">Conversion benchmarks & best practice</div></div><div class="intel-arrow">→</div></button>
     </div>
   </div>
+  <div class="loading" id="fixed-intel-loading" style="display:none;margin-top:0.5rem">Searching...</div>
+  <div class="ai-out" id="fixed-intel-result" style="display:none;margin-top:0.5rem"></div>
 
   <div class="card">
     <div class="card-label">Custom search</div>
     <textarea id="custom-intel" placeholder="What do you want to know about? e.g. 'What is Sorare doing in the UK market?' or 'How do sports apps use push notifications for re-engagement?'" style="min-height:60px"></textarea>
-    <div class="brow"><button class="btn btn-dark" onclick="runCustomIntel()">Search & synthesise →</button></div>
+    <div class="brow"><button class="btn btn-dark" id="intel-btn" onclick="runCustomIntel()">Search & synthesise →</button></div>
+    <div class="loading" id="intel-loading">Searching and synthesising...</div>
+    <div class="ai-out" id="intel-result" style="display:none"></div>
   </div>
 </div>
 
@@ -608,13 +609,13 @@ async function init() {
 
 async function loadData() {
   try {
-    const r = await window.storage.get('strategist-v1');
-    if (r && r.value) S = JSON.parse(r.value);
+    const r = localStorage.getItem('strategist-v1');
+    if (r) S = JSON.parse(r);
   } catch(e) {}
 }
 
 async function save() {
-  try { await window.storage.set('strategist-v1', JSON.stringify(S)); } catch(e) {}
+  try { localStorage.setItem('strategist-v1', JSON.stringify(S)); } catch(e) {}
   syncToBackend();
 }
 
@@ -785,13 +786,22 @@ function renderWorkstreams() {
 function coachOnWs(id) {
   const w = S.workstreams.find(x => x.id === id);
   if (!w) return;
-  sendPrompt(`I am Ethan Rand, Strategy Analyst at Angstrom Sports working on "${w.name}". Context: ${w.desc || ''}. Stakeholders: ${w.owner || 'TBC'}. I work on Seven — free-to-play football game linked to Ladbrokes, goal is to beat Super 6, launching August 2026. My manager Ross Jarvis wants me to make full proposals not wish lists, own the full argument, and think bigger picture. Acting as my Director of Strategy coach: 1) How would a Director frame this workstream — what's the real strategic question? 2) What are the 4-5 most important questions I need to answer? 3) What framework should I use? 4) What am I probably missing? 5) What would an excellent proposal on this look like to Ross? Be specific to FTP gaming and sports betting. ↗`);
+  document.getElementById('coach-input').value = `Workstream: ${w.name}. ${w.desc||''}`;
+  goTab('coach', document.querySelectorAll('.nav-item')[4]);
+  setTimeout(() => runCoach(), 100);
 }
 
-function intelOnWs(id) {
+async function intelOnWs(id) {
   const w = S.workstreams.find(x => x.id === id);
   if (!w) return;
-  sendPrompt(`Search for current industry news, competitor activity, and developments related to: "${w.name}". Context: ${w.desc || ''}. I work on Seven (free-to-play football game by Angstrom Sports, linked to Ladbrokes, competing with Super 6). Give me: 3-4 relevant recent developments, what competitors are doing in this area, and one key strategic insight I should factor into my work. ↗`);
+  goTab('intel', document.querySelectorAll('.nav-item')[6]);
+  const loading = document.getElementById('fixed-intel-loading');
+  const result = document.getElementById('fixed-intel-result');
+  if (!loading || !result) return;
+  loading.style.display = 'block'; result.style.display = 'none';
+  const text = await backendAI([{ role: 'user', content: `Search for current industry news and competitor activity related to: "${w.name}". Context: ${w.desc||''}. I work on Seven (free-to-play football game by Angstrom Sports, linked to Ladbrokes, competing with Super 6, launching August 2026). Give me: 3-4 relevant recent developments, what competitors are doing in this area, and one key strategic insight for my work on this workstream.` }], 700);
+  result.textContent = text || 'Could not retrieve intel. Try again.';
+  result.style.display = 'block'; loading.style.display = 'none';
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1003,26 +1013,74 @@ function getWsSummary() {
   return active.map(w => `"${w.name}" (${w.area||'strategy'}): ${w.desc||'No description'}`).join(' | ');
 }
 
-function runCoach() {
-  const input = document.getElementById('coach-input').value.trim();
-  if (!input) { alert('Describe the task or challenge first.'); return; }
-  sendPrompt(`I am Ethan Rand, Strategy Analyst at Angstrom Sports building Seven (free-to-play football game, pick 7 players to score first or last goal, linked to Ladbrokes, goal to beat Super 6, launching August 2026). My manager Ross Jarvis (Director of Strategy) wants me to make full proposals not wish lists, own the full argument, think bigger picture, and be more embedded in product decisions. I want to approach this challenge like a Director of Strategy: "${input}". Give me: 1) How a Director would reframe this — what is the real strategic question? 2) The 4-5 questions I must answer before doing anything 3) The right framework to use — name it and explain it 4) What assumptions I'm probably making that I should challenge 5) What a full, defensible proposal would look like to Ross. Be specific to FTP gaming and sports betting. ↗`);
+async function aiToPanel(prompt, loadingId, resultId, btnIds, maxTokens) {
+  const loading = document.getElementById(loadingId);
+  const result = document.getElementById(resultId);
+  if (btnIds) btnIds.forEach(id => { const b = document.getElementById(id); if(b) b.disabled = true; });
+  loading.style.display = 'block';
+  result.style.display = 'none';
+  try {
+    const text = await backendAI([{ role: 'user', content: prompt }], maxTokens || 800);
+    result.textContent = text || 'No response received. Try again.';
+    result.style.display = 'block';
+  } catch(e) {
+    result.textContent = 'Could not reach the backend. Wait 30 seconds and try again.';
+    result.style.display = 'block';
+  }
+  loading.style.display = 'none';
+  if (btnIds) btnIds.forEach(id => { const b = document.getElementById(id); if(b) b.disabled = false; });
 }
 
-function runStructure() {
+async function runCoach() {
   const input = document.getElementById('coach-input').value.trim();
   if (!input) { alert('Describe the task or challenge first.'); return; }
-  sendPrompt(`Build me a clear document structure for this piece of work: "${input}". I work on Seven at Angstrom Sports. Give me: the right format (doc, slide, memo?), a section-by-section structure with what each section should contain, the right level of detail for Ross Jarvis (Director of Strategy), and a suggested time allocation per section. Make it something I can follow immediately — a full proposal structure, not a wish list. ↗`);
+  await aiToPanel(
+    `I am Ethan Rand, Strategy Analyst at Angstrom Sports building Seven (free-to-play football game, pick 7 players to score first or last goal, linked to Ladbrokes, goal to beat Super 6, launching August 2026). My manager Ross Jarvis wants me to make full proposals not wish lists, own the full argument, think bigger picture. I want to approach this challenge like a Director of Strategy: "${input}". Give me: 1) How a Director would reframe this — what is the real strategic question? 2) The 4-5 questions I must answer first 3) The right framework — name it and explain it 4) Assumptions I'm probably making that I should challenge 5) What a full defensible proposal would look like to Ross. Be specific to FTP gaming and sports betting.`,
+    'coach-loading', 'coach-result', ['coach-btn','structure-btn','questions-btn'], 900
+  );
 }
 
-function runQuestions() {
+async function runStructure() {
   const input = document.getElementById('coach-input').value.trim();
   if (!input) { alert('Describe the task or challenge first.'); return; }
-  sendPrompt(`For this task: "${input}" — I work on Seven at Angstrom Sports. Give me the 8 most important questions I need to answer before I can complete this well. Order by priority. For each question explain why it matters and who or what would help me answer it. ↗`);
+  await aiToPanel(
+    `Build me a clear document structure for: "${input}". I work on Seven at Angstrom Sports. Give me: the right format (doc, slide, memo?), section-by-section structure with what each section should contain, the right detail level for Ross Jarvis (Director of Strategy), and suggested time allocation per section. A full proposal structure, not a wish list.`,
+    'coach-loading', 'coach-result', ['coach-btn','structure-btn','questions-btn'], 700
+  );
 }
 
-function runProactiveIdeas() {
-  sendPrompt(`I am Ethan Rand, Strategy Analyst at Angstrom Sports. I work on Seven — free-to-play football game, pick 7 players to score first or last goal, linked to Ladbrokes, goal to beat Super 6, launching August 2026. My active workstreams: ${getWsSummary()}. My manager Ross Jarvis wants me to take more strategic initiative — make proposals, not wish lists, and bring things to him proactively. Generate 5 high-impact pieces of work I am NOT doing right now that would make me stand out as operating at Director of Strategy level. For each: name it, explain why it matters strategically, connect it to beating Super 6 or Entain's broader goals, and give me the very first concrete action. Mix short-term (this week) and medium-term (this month). Be specific — not generic strategy advice. ↗`);
+async function runQuestions() {
+  const input = document.getElementById('coach-input').value.trim();
+  if (!input) { alert('Describe the task or challenge first.'); return; }
+  await aiToPanel(
+    `For this task: "${input}" — I work on Seven at Angstrom Sports. Give me the 8 most important questions I need to answer before completing this well. Order by priority. For each question explain why it matters and who or what helps me answer it.`,
+    'coach-loading', 'coach-result', ['coach-btn','structure-btn','questions-btn'], 700
+  );
+}
+
+async function runProactiveIdeas() {
+  await aiToPanel(
+    `I am Ethan Rand, Strategy Analyst at Angstrom Sports. I work on Seven — free-to-play football game, pick 7 players to score first or last goal, linked to Ladbrokes, goal to beat Super 6, launching August 2026. Active workstreams: ${getWsSummary()}. My manager Ross Jarvis wants me to take more strategic initiative — make proposals not wish lists, bring things to him proactively. Generate 5 high-impact pieces of work I am NOT doing right now that would make me stand out as operating at Director of Strategy level. For each: name it, explain why it matters strategically, connect it to beating Super 6 or Entain goals, and give me the first concrete action. Mix short-term (this week) and medium-term (this month).`,
+    'proactive-loading', 'proactive-result', ['proactive-btn'], 900
+  );
+}
+
+async function runProactiveDaily() {
+  await aiToPanel(
+    `I am Ethan Rand, Strategy Analyst at Angstrom Sports. I work on Seven — free-to-play football game, pick 7 players to score first or last goal, linked to Ladbrokes, goal to beat Super 6, launching August 2026. Active workstreams: ${getWsSummary()}. My manager Ross Jarvis wants me to take more strategic initiative — make proposals not wish lists, bring things to him proactively. Generate 5 high-impact pieces of work I am NOT doing right now that would make me stand out as operating at Director of Strategy level. For each: name it, explain why it matters strategically, connect it to beating Super 6 or Entain goals, and give me the first concrete action. Mix short-term (this week) and medium-term (this month).`,
+    'proactive-daily-loading', 'proactive-daily-result', ['proactive-daily-btn'], 900
+  );
+}
+
+const FRAMEWORKS = {
+  mece: `Teach me the MECE principle applied to strategy work. Give me a concrete example from FTP gaming — specifically how to structure a product roadmap recommendation for Seven (free-to-play football game by Angstrom Sports, linked to Ladbrokes). Then give me a checklist I can use for any strategic output at work.`,
+  pyramid: `Teach me the Pyramid Principle — how Directors structure recommendations. Show me how to apply this to writing a recommendation about the Axium AI roadmap for Seven. Give me a template I can follow immediately.`,
+  proposal: `Explain how to write a proper strategic recommendation — not a wish list, but a full proposal with situation, recommendation, rationale, defence, and asks. Ross Jarvis (Director of Strategy at Angstrom Sports) wants Ethan Rand to own the full argument not just list options. Use the Seven post-launch roadmap as the example.`,
+  narrative: `Explain how to build a strategic narrative to get buy-in from senior stakeholders. Use the Seven season one roadmap (August 2026 to May 2027) as the example. What is the story structure? How do you make it feel inevitable? How do you handle uncertainty?`
+};
+
+async function runFramework(key) {
+  await aiToPanel(FRAMEWORKS[key], 'framework-loading', 'framework-result', [], 900);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1047,16 +1105,40 @@ function getCompletedTasks() {
   return done.map(t => t.name).join(', ');
 }
 
-function genTeamsUpdate() {
-  sendPrompt(`Write a short confident daily Teams update message for Ethan Rand to send to Ross Jarvis (Director of Strategy) and Ben Porter (Strategy Manager) at Angstrom Sports. Context: Ethan is Strategy Analyst building Seven (free-to-play football game linked to Ladbrokes, goal to beat Super 6). Active workstreams: ${getWsSummary()}. Notes today: ${getWeekNotes()}. Completed tasks: ${getCompletedTasks()}. Write 2-4 sentences only. Lead with what moved forward, flag anything blocked, mention what I'm focused on next. Confident tone — not apologetic, not over-detailed. Ross likes constant communication and proactive updates. Just write the message, no preamble. ↗`);
+function copyResult(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent).then(() => alert('Copied to clipboard!')).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = el.textContent; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    alert('Copied to clipboard!');
+  });
 }
 
-function genWsUpdate() {
+async function genTeamsUpdate() {
+  const btn = document.getElementById('teams-btn');
+  const copy = document.getElementById('teams-copy');
+  copy.style.display = 'none';
+  await aiToPanel(
+    `Write a short confident daily Teams update message for Ethan Rand to send to Ross Jarvis (Director of Strategy) and Ben Porter (Strategy Manager) at Angstrom Sports. Context: Ethan is Strategy Analyst building Seven (free-to-play football game linked to Ladbrokes, goal to beat Super 6). Active workstreams: ${getWsSummary()}. Notes today: ${getWeekNotes()}. Completed tasks: ${getCompletedTasks()}. Write 2-4 sentences only. Lead with what moved forward, flag anything blocked, mention what I'm focused on next. Confident tone — not apologetic. Ross likes proactive updates. Just write the message, no preamble.`,
+    'teams-loading', 'teams-result', ['teams-btn'], 300
+  );
+  copy.style.display = 'inline-flex';
+}
+
+async function genWsUpdate() {
   const wsId = document.getElementById('comms-ws').value;
   const w = S.workstreams.find(x => x.id == wsId);
   if (!w) { alert('Select a workstream first.'); return; }
+  const copy = document.getElementById('ws-update-copy');
+  copy.style.display = 'none';
   const relNotes = S.notes.filter(n => n.wsName === w.name).slice(-5).map(n => n.text).join(' | ');
-  sendPrompt(`Write a brief workstream status update for Ethan Rand to paste into Teams or email for Ross Jarvis and Ben Porter. Workstream: "${w.name}". Status: ${w.status}. Description: ${w.desc||''}. Recent notes: ${relNotes||'None'}. 3-5 sentences. Cover what it is, where it's at, what's been done, what's next, any flags. Tone: clear and confident. Just write the update, no preamble. ↗`);
+  await aiToPanel(
+    `Write a brief workstream status update for Ethan Rand to paste into Teams or email for Ross Jarvis and Ben Porter at Angstrom Sports. Workstream: "${w.name}". Status: ${w.status}. Description: ${w.desc||''}. Recent notes: ${relNotes||'None'}. 3-5 sentences. Cover what it is, where it's at, what's been done, what's next, any flags or asks. Tone: clear and confident. Just write the update, no preamble.`,
+    'ws-update-loading', 'ws-update-result', ['ws-update-btn'], 300
+  );
+  copy.style.display = 'inline-flex';
 }
 
 async function sendBriefingNow() {
@@ -1114,13 +1196,57 @@ function renderWsIntel() {
     <button class="intel-btn" onclick="intelOnWs(${w.id})">
       <div><div class="intel-title">${w.name}</div><div class="intel-sub">${w.area||'Strategy'} · Search industry news tied to this workstream</div></div>
       <div class="intel-arrow">→</div>
-    </button>`).join('');
+    </button>`).join('') + '<div class="loading" id="ws-intel-loading" style="display:none">Searching industry news...</div><div class="ai-out" id="ws-intel-result" style="display:none"></div>';
 }
 
-function runCustomIntel() {
+async function intelOnWs(id) {
+  const w = S.workstreams.find(x => x.id === id);
+  if (!w) return;
+  const el = document.getElementById('ws-intel-result');
+  const loading = document.getElementById('ws-intel-loading');
+  if (!el || !loading) return;
+  loading.style.display = 'block'; el.style.display = 'none';
+  const text = await backendAI([{ role: 'user', content: `Search for current industry news and competitor activity related to: "${w.name}". Context: ${w.desc||''}. I work on Seven (free-to-play football game by Angstrom Sports, linked to Ladbrokes, competing with Super 6, launching August 2026). Give me: 3-4 relevant recent developments, what competitors are doing in this area, and one key strategic insight I should factor into my work on this workstream.` }], 700);
+  el.textContent = text || 'Could not retrieve intel. Try again.';
+  el.style.display = 'block'; loading.style.display = 'none';
+}
+
+async function coachOnWs(id) {
+  const w = S.workstreams.find(x => x.id === id);
+  if (!w) return;
+  document.getElementById('coach-input').value = `${w.name}: ${w.desc||''}`;
+  goTab('coach', document.querySelector('.nav-item:nth-child(5)'));
+  await runCoach();
+}
+
+async function runCustomIntel() {
   const q = document.getElementById('custom-intel').value.trim();
   if (!q) { alert('Enter a search topic first.'); return; }
-  sendPrompt(`Search for current information on: "${q}". Then give me a strategic synthesis specifically relevant to someone working on Seven — free-to-play football game by Angstrom Sports, linked to Ladbrokes, aiming to beat Super 6 in the UK OSB market. Key findings + strategic implications for Seven. Be specific and actionable. ↗`);
+  await aiToPanel(
+    `Search for current information on: "${q}". Then give me a strategic synthesis specifically relevant to someone working on Seven — free-to-play football game by Angstrom Sports, linked to Ladbrokes, aiming to beat Super 6 in the UK OSB market. Key findings + strategic implications for Seven. Be specific and actionable.`,
+    'intel-loading', 'intel-result', ['intel-btn'], 800
+  );
+}
+
+const INTEL_TOPICS = {
+  super6: `Search for the latest news, product updates, and strategy around Super 6 by Sky Bet in the last 3 months. What are they doing — product changes, prize structure, marketing, user numbers? What does this mean strategically for Seven (free-to-play football game by Angstrom Sports, linked to Ladbrokes, launching August 2026)? Where are the gaps Seven can exploit?`,
+  ftp: `Search for the latest trends in free-to-play gaming in UK sports betting in 2025-2026. What are major operators investing in? What engagement mechanics are working? What should Seven be paying attention to before August 2026 launch?`,
+  launch: `Search for examples of successful FTP sports game launches — how did they acquire users, build habits, and drive engagement past the first 4 weeks? What can Seven learn for its August 2026 UK launch? Include examples from betting, fantasy, and gaming.`,
+  gamification: `Search for gamification examples in sports apps — badges, streaks, progression systems, social features, animations. What works and why? Give me 4-5 concrete examples. Which mechanics should Seven consider for its post-launch roadmap (August 2026 to May 2027)?`,
+  entain: `Search for the latest Entain company news and strategy updates from the last 3 months. What are the group priorities? Any announcements about free-to-play, product innovation, or UK market strategy? What should Ethan Rand at Angstrom Sports (building Seven for Entain) be aware of?`,
+  ai: `Search for the latest AI usage in sports apps in 2025-2026 — player performance insights, prediction tools, personalisation, fan engagement. What are Stats Perform, Opta, Genius Sports doing? What are FPL, Sorare, DraftKings building with AI? What does it mean for Seven's Axium AI partnership?`,
+  regulation: `Search for the latest UK online sports betting regulatory news — anything affecting free-to-play games, jackpot promotions, cross-sell mechanics between FTP and real-money betting. What are the regulatory risks for Seven, linked to Ladbrokes, launching August 2026?`,
+  crosssell: `Search for examples of cross-sell and acquisition mechanics between free-to-play games and real-money gambling. What conversion rates are good? What best practices exist? How does the Sky Bet / Super 6 model perform? What lessons apply to Seven's x-sell into Ladbrokes?`
+};
+
+async function runIntelTopic(key) {
+  const loading = document.getElementById('fixed-intel-loading');
+  const result = document.getElementById('fixed-intel-result');
+  loading.style.display = 'block'; result.style.display = 'none';
+  result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  const text = await backendAI([{ role: 'user', content: INTEL_TOPICS[key] }], 800);
+  result.textContent = text || 'Could not retrieve intel. Try again.';
+  result.style.display = 'block'; loading.style.display = 'none';
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1145,6 +1271,19 @@ function renderAll() {
 // ═══════════════════════════════════════════════════════
 // START
 // ═══════════════════════════════════════════════════════
+
+// Keep backend awake on weekdays 7am-7pm Eastern
+function keepAlive() {
+  const now = new Date();
+  const day = now.getDay();
+  const hour = now.getHours();
+  if (day >= 1 && day <= 5 && hour >= 7 && hour <= 19) {
+    fetch(BACKEND + '/ping').catch(() => {});
+  }
+}
+setInterval(keepAlive, 5 * 60 * 1000); // every 5 minutes
+keepAlive();
+
 init();
 </script>
 </body>
